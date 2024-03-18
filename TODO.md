@@ -1,0 +1,2 @@
+- refactor http.sslVerify: it was set globally, which is not good - should it be a switch?  Or a configuraiton element?
+- refactor update: should not rely on env. variable, use either pwd or arg to the workspace

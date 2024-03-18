@@ -1,0 +1,96 @@
+{
+  "bootstrap": "project3",
+  "projects": [
+    {
+      "name": "project1",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project1.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "apple",
+      "update": "true"
+    },
+    {
+      "name": "project2",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project1.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project3",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project1.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project4",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project2.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash doLast.sh"
+      ]
+    },
+    {
+      "name": "project5",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project3.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash doLast.sh"
+      ]
+    }
+  ]
+}

@@ -4,10 +4,21 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-declare INSTALLER_VERSION="2.7.5"
-declare INSTALLER_SCRIPT_URL='https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw'
-declare INSTALLER_CONF_URL=''
-declare INSTALLER_BOOTSTRAP_PROJECT='tools'
+declare -r INSTALLER_VERSION="2.7.5"
+declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw'}
+declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw'}
+
+# To get the branch specific configuration, we need to know the sCM plaform
+# Supported platforms:
+# bitbucket_server - Bitbucket on-prem server (any variant)
+# github - get_stream_configuration_github
+# static - get_stream_configuration_static
+#   This can be used with web servers with static files where the branch is handled as an URI path component.
+#   In this case INSTALLER_CONFIG_URL should be set to the root, for example
+#     INSTALLER_CONFIG_URL=http://xyz will be used as http://xyz/mybranch/projects.json
+declare -r INSTALLER_SCM_PLATFORM=${INSTALLER_SCM_PLATFORM:-'bitbucket_server'}
+
+declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_SCM_PLATFORM}"}
 
 #######################################
 # Displays help.
@@ -21,24 +32,22 @@ function help()
   local filename
   filename=$(basename "$0")
   echo "Usage: ${filename} [options] [<command>] [arguments]"; \
-  echo "Install and setup project repositories."; \
+  echo "Install project repositories."; \
   echo "Commands:"; \
   echo "  install [project...]  install a project(s) - default command -"; \
   echo "  list                  list available projects"; \
   echo "  update                update existing projects"; \
   echo "  help                  print help - this command -"; \
   echo "Options:"; \
-  echo "      --skipInstallerUpdate       do not run self updater"; \
-  echo "      --useLocal                  use local configuration and dependencies"; \
+  echo "      --use-local                 use local artifacts and do not run self updater"; \
   echo "  -y, --yes                       say 'yes' to user questions"; \
-  echo "      --link <target>             symlinked mode for shared workspace support (CI only)"; \
-  echo "      --branch <branch>           project branch, if it exits on remote (fallback to branch in configuration)"; \
+  echo "      --link <target>             linked mode"; \
+  echo "      --branch <branch>           project branch, if it exits on remote (falls back to branch in configuration)"; \
   echo "      --stream <branch>           development stream (defaults to master)"; \
-  echo "      --configuration <branch>    deprecated use --stream instead"; \
-  echo "      --cloneOptions <branch>     clone options (fallback to clone options in configuration)"; \
-  echo "      --fetchAll                  fetch all remotes"; \
+  echo "      --clone-options <branch>    clone options (falls back to cloneOptions in configuration)"; \
+  echo "      --fetch-all                 fetch all remotes"; \
   echo ""; \
-  echo "More information at <http://ies-iesd-conf.ies.mentorg.com:8090/x/su3LCw>" 1>&2; exit 1;
+  echo "More information at <TBD>" 1>&2; exit 0;
 }
 
 function link()
@@ -412,21 +421,21 @@ function urlencode() {
 }
 
 #######################################
-# Downloads the stream configuration from remote SCM.
+# Downloads the stream configuration from Bitbucket SCM.
 # credits https://gist.github.com/cdown/1163649
 # Arguments:
 #   None
 # Returns:
 #   None
 #######################################
-function get_stream_configuration()
+function get_stream_configuration_bitbucket_server()
 {
   local streamBranchSet="$1"
   local streamBranch="$2"
-  local configurationURL="${INSTALLER_CONF_URL}/projects.json"
+  local configurationURL="${INSTALLER_CONFIG_URL}/projects.json"
   log "Getting stream configuration..."
-  if [[ "${stream_branch_set}" == 1 ]]; then
-    { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${stream_branch}")
+  if [[ "${streamBranchSet}" == 1 ]]; then
+    { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${streamBranch}")
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
@@ -436,7 +445,7 @@ function get_stream_configuration()
       exit 1
     else
       # success
-      log "Stream branch '${stream_branch}' is selected"
+      log "Stream branch '${streamBranch}' is selected"
       return
     fi
   fi
@@ -446,6 +455,43 @@ function get_stream_configuration()
   fi
   log "Stream branch 'default' is selected"
 }
+
+#######################################
+# Downloads the stream configuration from web server for static files.
+# credits https://gist.github.com/cdown/1163649
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+function get_stream_configuration_static()
+{
+  local streamBranchSet="$1"
+  local streamBranch="$2"
+  local configurationURL="${INSTALLER_CONFIG_URL}"
+  log "Getting stream configuration..."
+  if [[ "${streamBranchSet}" == 1 ]]; then
+    { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
+    # it's not possible to check remote branch here
+    # as no git reposiory available yet, just try to fetch the file
+    local httpCode
+    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}/${streamRefSpec}/projects.json" -o "projects.json")
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "Stream branch doesn't exists"
+      exit 1
+    else
+      # success
+      log "Stream branch '${streamBranch}' is selected"
+      return
+    fi
+  fi
+  if ! curl -s -k -L -# "${configurationURL}/projects.json" -o "projects.json"; then
+    err "Failed to download stream configuration"
+    exit 1
+  fi
+  log "Stream branch 'default' is selected"
+}
+
 
 #######################################
 # Checks if we are inside another Git repository which can cause all kinds of
@@ -465,6 +511,30 @@ function precondition_nested_repository()
 }
 
 #######################################
+# Set JQ and download URL depending on OS type.
+# Arguments:
+#   None
+# Returns:
+#   JQSourceURL - platfrom specific download location
+#   JQ - the executable
+#######################################
+function set_jq()
+{
+  # check if jq is available on the path
+  if jq --version >/dev/null 2>&1; then
+    JQ='jq'
+  else
+    # get source location for download
+    if [[ $(uname -s) == "Linux" ]]; then
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
+    else
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
+    fi
+    JQ='.installer/jq'
+  fi
+}
+
+#######################################
 # Downloads the JQ tool binary from local SCM.
 # Arguments:
 #   None
@@ -473,14 +543,15 @@ function precondition_nested_repository()
 #######################################
 function get_jq()
 {
-  if [[ ! -f "${JQ}" ]]; then
-    # download it
-    local jqURL="https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw/bin/${JQFileSource}"
+  # if source is set then try to download
+  if [[ -n ${JQSourceURL} ]]; then
     log "Getting jq..."
-    if ! curl -k -s -L -# "${jqURL}" -o "${JQFileName}" --create-dirs; then
+    if ! curl -k -s -L -# "${JQSourceURL}" -o "${JQ}" --create-dirs; then
       err "Failed to download jq binary"
       exit 1
     fi
+    # set executable permission (it's curled)
+    chmod +x "${JQ}" > /dev/null 2>&1;
   fi
 }
 
@@ -531,58 +602,6 @@ function err()
 }
 
 #######################################
-# Set JQ file name depending on OS type.
-# jq for linux
-# jq.exe for windows
-# Arguments:
-#   None
-# Returns:
-#   JQFileName - JQ file name
-#######################################
-function set_jq_file_name()
-{
-  if [[ $(uname -s) == "Linux" ]]; then
-      JQFileSource='linux/jq'
-      JQFileName='.installer/jq'
-  else
-      JQFileSource='jq.exe'
-      JQFileName='.installer/jq.exe'
-  fi
-}
-#######################################
-# Set JQ binary location.
-# Arguments:
-#   None
-# Returns:
-#   JQ - jq binary location
-#######################################
-function set_jq_location()
-{
-  set_jq_file_name
-  # JQ binary location is configurable
-  if [[ -f "${VSB_TOOLS_HOME}/bin/${JQFileName}" ]]; then
-    # use local binary
-    JQ="${VSB_TOOLS_HOME}/bin/${JQFileName}"
-  else
-    JQ="./${JQFileName}"
-  fi
-}
-
-#######################################
-# Set JQ binary executable permission.
-# Arguments:
-#   None
-# Returns:
-#   None
-#######################################
-function set_jq_permission() {
-  if [[ $(uname -s) == "Linux" ]]; then
-    # try to set executable permission (it's curled)
-    chmod +x "${JQ}" > /dev/null 2>&1;
-  fi
-}
-
-#######################################
 # Check if remote refspec exists? and delete them if not.
 # Arguments:
 #   None
@@ -629,7 +648,7 @@ function main()
   local streamBranch
   local cloneOptionsSet
   local cloneOptions
-  local _local
+  local useLocal
   local fetchAll
   yes=0
   list=0
@@ -641,7 +660,7 @@ function main()
   streamBranch="unset"
   cloneOptionsSet=0
   cloneOptions="unset"
-  _local=0
+  useLocal=0
   fetchAll=0
   params=
   while (( "$#" )); do
@@ -678,20 +697,17 @@ function main()
         streamBranch="$1"
         shift
         ;;
-      --cloneOptions)
+      --clone-options)
         cloneOptionsSet=1
         shift
         cloneOptions="$1"
         shift
         ;;
-      --skipInstallerUpdate) # do nothing just silently ignore
+      --use-local) # use local copy of configuration and dependencies
+        useLocal=1
         shift
         ;;
-      --useLocal) # use local copy of configuration and dependencies
-        _local=1
-        shift
-        ;;
-      --fetchAll) # fetch all refs not only the specified branch
+      --fetch-all) # fetch all refs not only the specified branch
         fetchAll=1
         shift
         ;;
@@ -717,30 +733,22 @@ function main()
   eval set -- "${params}"
 
   # check preconditions
-  precondition_in_tools
-  if [[ -z "${VSB_CI}" ]]; then
-    precondition_nested_repository
-  fi
+  #precondition_in_tools
+  precondition_nested_repository
 
-  set_jq_location
+  set_jq
 
   # update if needed
-  if [[ "${_local}" == "0" ]]; then
+  if [[ "${useLocal}" == "0" ]]; then
 
-    # update stream configuration
-    get_stream_configuration "${streamBranchSet}" "${streamBranch}"
+    # get/update stream configuration
+    $INSTALLER_GET_STREAM_CONFIGURATION "${streamBranchSet}" "${streamBranch}"
 
     # get jq executable (external dependency)
     get_jq
   else
     log "Using local copy of the configuration and dependencies (might be out-of-date)"
   fi
-
-  set_jq_permission
-
-  # some environment information (also fail fast...)
-  log "jq version $("${JQ}" --version)"
-  log "$(git --version)"
 
   # list projects
   if [[ ${list} == 1 ]]; then
@@ -752,14 +760,7 @@ function main()
   # getting dangerous from here
   precondition_user_confirm_uncommited "${yes}"
 
-  # disable SSL verification
-  if [[ -z "${VSB_CI}" ]]; then
-    log "Disabling SSL certification validation globally to support self-signed certificates"
-    if ! git config --global http.sslVerify false; then
-      err "Failed to disable SSL certification validation"
-      exit 1
-    fi
-  fi
+  # TODO handle SSL verification aka http.sslVerify
 
   if [[ ${link} == 1 ]]; then
     log "Using linked mode"
@@ -811,6 +812,9 @@ function main()
     projectNamesArray=("${projectNames[@]}")
   fi
 
+  local bootstrapProject
+  bootstrapProject=$("${JQ}" -r '.bootstrap' projects.json)
+
   local bootstrapProjectAdded=0
   # project order can affect doLast scripts
   local orderedProjects=false
@@ -819,39 +823,23 @@ function main()
     for projectName in "${projectNamesArray[@]}"
     do
       project_exists "${projectName}"
-      if [[ "${LAST_RETURN}" == "0" ]]; then
+      if [[ "${INSTALLER_LAST_RETURN}" == "0" ]]; then
           # user selected project is not found
           err "Project '${projectName}' is undefined"
           log "Hint: Check your project(s) configuration"
           exit 1
       fi
-      if [[ "${projectName}" == "tools" ]]; then
+      if [[ "${projectName}" == "${bootstrapProject}" ]]; then
         bootstrapProjectAdded=1
       fi
     done
 
-    # check if we are in CI mode or not, if not add the mandatory projects
-    if [[ -z "$VSB_CI" ]]; then
-      # make sure mandatory 'tools' project is added
-      if [[ "${toolsProjectAdded}" == 0 ]]; then
-        log "Adding project 'tools' implicitly"
-        # add to the beginning of the array
-        projectNamesArray=("tools" "${projectNamesArray[@]}")
-      fi
-
-      # make sure mandatory 'tools-deps' project is added
-      if [[ "${toolsDepsProjectAdded}" == 0 ]]; then
-        # add to the beginning of the array
-        if [[ $(uname -s) == "Linux" ]]; then
-          log "Adding project 'tools-deps-linux' implicitly"
-          projectNamesArray=("tools-deps-linux" "${projectNamesArray[@]}")
-        else
-          log "Adding project 'tools-deps' implicitly"
-          projectNamesArray=("tools-deps" "${projectNamesArray[@]}")
-        fi
-      fi
+    # make sure mandatory 'tools' project is added
+    if [[ ${bootstrapProjectAdded} == 0 ]]; then
+      log "Adding bootstrap project '$bootstrapProject' implicitly"
+      # add to the beginning of the array
+      projectNamesArray=("${bootstrapProject}" "${projectNamesArray[@]}")
     fi
-
   else
     log "No projects were specified by the user, adding default projects"
     # no user project selection, add all 'default' projects from the configuration
@@ -859,55 +847,33 @@ function main()
 
     # project order retained from the configuration file
     orderedProjects=true
-
-    # check if we are in CI mode or not, if not add the mandatory projects which are not set default
-    if [[ -z "$VSB_CI" ]]; then
-      # tools-deps is platform specific
-      # add to the beginning of the array
-      if [[ $(uname -s) == "Linux" ]]; then
-        log "Adding project 'tools-deps-linux' implicitly"
-        projectNamesArray=("tools-deps-linux" "${projectNamesArray[@]}")
-      else
-        log "Adding project 'tools-deps' implicitly"
-        projectNamesArray=("tools-deps" "${projectNamesArray[@]}")
-      fi
-
-      # we changed the order, need to sort
-      orderedProjects=false
-    fi
   fi
 
-  # only sort when not running in CI mode (CI scripts should list projects correctly)
-  if [[ -z "$VSB_CI" ]]; then
-    if [[ $orderedProjects = false ]]; then
-      log "Sorting projects based on configuration index"
-
-      local orderedProjectNamesArray
-      orderedProjectNamesArray=()
-
-      # load the projects from the configuration
-      local configurationProjectNamesArray
-      readarray -t configurationProjectNamesArray < <("${JQ}" -r '.projects[] | .name' projects.json)
-
-      for configurationProjectName in "${configurationProjectNamesArray[@]}"
+  # sort projects
+  if [[ $orderedProjects = false ]]; then
+    log "Sorting projects based on configuration index"
+    local orderedProjectNamesArray
+    orderedProjectNamesArray=()
+    # load the projects from the configuration
+    local configurationProjectNamesArray
+    readarray -t configurationProjectNamesArray < <("${JQ}" -r '.projects[] | .name' projects.json)
+    for configurationProjectName in "${configurationProjectNamesArray[@]}"
+    do
+      # trim name
+      configurationProjectName=$(echo "${configurationProjectName}" | xargs)
+      for projectName in "${projectNamesArray[@]}"
       do
-        # trim name
-        configurationProjectName=$(echo "${configurationProjectName}" | xargs)
-        for projectName in "${projectNamesArray[@]}"
-        do
-          if [[ "${projectName}" = "${configurationProjectName}" ]]; then
-            orderedProjectNamesArray+=("${projectName}")
-          fi
-        done
+        if [[ "${projectName}" = "${configurationProjectName}" ]]; then
+          orderedProjectNamesArray+=("${projectName}")
+        fi
       done
-
-      # overwrite with sorted array
-      projectNamesArray=("${orderedProjectNamesArray[@]}")
-    fi
+    done
+    # overwrite with sorted array
+    projectNamesArray=("${orderedProjectNamesArray[@]}")
   fi
 
   # allow remote branch refs
-  project_branch=${project_branch/"remotes/origin/"/""}
+  projectBranch=${projectBranch/"remotes/origin/"/""}
 
   # install projects
   for projectName in "${projectNamesArray[@]}"
@@ -915,7 +881,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${LAST_RETURN}" "${project_branch_set}" "${project_branch}" "${clone_options_set}" "${clone_options}" "${fetch_all}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}"
   done
 }
 
@@ -957,39 +923,39 @@ function list_projects()
 #######################################
 function find_project_by_name()
 {
-  LAST_RETURN=0
+  INSTALLER_LAST_RETURN=0
   local projectName="$1"
 
   local projectConfiguration
   projectConfiguration=$("${JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
   if [[ ! -z "${projectConfiguration}" ]]; then
-    LAST_RETURN="${projectConfiguration}"
+    INSTALLER_LAST_RETURN="${projectConfiguration}"
   fi
 }
 
 #######################################
 # Checks project in configuration file by name;
 # Globals:
-#  LAST_RETURN - "1" if project exsits, "0" otherwise
+#  INSTALLER_LAST_RETURN - "1" if project exsits, "0" otherwise
 # Arguments:
 #  $1 - project name
 #######################################
 function project_exists()
 {
-  LAST_RETURN=0
+  INSTALLER_LAST_RETURN=0
   local projectName="$1"
 
   local projectConfiguration
   projectConfiguration=$("${JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
   if [[ ! -z "${projectConfiguration}" ]]; then
-    LAST_RETURN=1
+    INSTALLER_LAST_RETURN=1
   fi
 }
 
 #######################################
 # Self-update; credits https://gist.github.com/cubedtear/54434fc66439fc4e04e28bd658189701
 # Globals:
-#  LATEST - returns 1 if the script is at the lastest version; 0 otherwise
+#  INSTALLER_LATEST - returns 1 if the script is at the lastest version; 0 otherwise
 # Arguments:
 #  None
 #######################################
@@ -999,8 +965,8 @@ function update()
   local temporaryFile
   temporaryFile=$(mktemp -p "" "XXXXX.sh")
 
-  local scriptURL="${INSTALLER_SCRIPT_URL}/installer.sh"
-  if ! curl -s -k -L -# "${scriptURL}" > "${temporaryFile}"; then
+  local selfURL="${INSTALLER_SELF_URL}"
+  if ! curl -s -k -L -# "${selfURL}" > "${temporaryFile}"; then
     err "[updater] Failed to download updates"
     exit 1
   fi
@@ -1008,9 +974,9 @@ function update()
   local nextVersion
   nextVersion=$(grep "^VERSION" "${temporaryFile}" | awk -F'[="]' '{print $3}')
   local absScriptPath
-  absScriptPath=$(readlink -f "${SCRIPT_LOCATION}")
-  if [[ "$VERSION" < "${nextVersion}" ]]; then
-    printf "${LOG_PREFIX} [updater] Updating \e[31;1m%s\e[0m -> \e[32;1m%s\e[0m\n" "${VERSION}" "${nextVersion}"
+  absScriptPath=$(readlink -f "${INSTALLER_SELF}")
+  if [[ "$INSTALLER_VERSION" < "${nextVersion}" ]]; then
+    printf "${LOG_PREFIX} [updater] Updating \e[31;1m%s\e[0m -> \e[32;1m%s\e[0m\n" "${INSTALLER_VERSION}" "${nextVersion}"
 
     {
       echo "cp \"${temporaryFile}\" \"${absScriptPath}\""
@@ -1024,14 +990,14 @@ function update()
     log "[updater] No update available"
     rm -f "${temporaryFile}"
     # continue, we are at the latest version
-    LATEST=1
+    INSTALLER_LATEST=1
   fi
 }
 
 #######################################
 # Process arguments controlling the update process.
 # Globals:
-#  UPDATED - return 1 if the update was suppressed manually or an actual update was done
+#  INSTALLER_UPDATED - return 1 if the update was suppressed manually or an actual update was done
 # Arguments:
 #  $# - script argunements
 #######################################
@@ -1042,17 +1008,11 @@ function process_updater_arguments()
   params=
   while (( "$#" )); do
     case "$1" in
-      --skipInstallerUpdate) # inhibit update before/after
-        UPDATED=1
+      --use-local) # inhibit update before/after
+        INSTALLER_UPDATED=1
         shift
         ;;
       -y|--yes) # skip ahead
-        shift
-        ;;
-      --useLocal) # skip ahead
-        shift
-        ;;
-      -s|--ssh) # skip ahead
         shift
         ;;
       --link) # skip ahead
@@ -1067,15 +1027,11 @@ function process_updater_arguments()
         shift
         shift
         ;;
-      --configuration) # skip ahead
+      --clone-options) # skip ahead
         shift
         shift
         ;;
-      --cloneOptions) # skip ahead
-        shift
-        shift
-        ;;
-      --fetchAll) # skip ahead
+      --fetch-all) # skip ahead
         shift
         ;;
       --) # end argument parsing
@@ -1099,16 +1055,16 @@ function process_updater_arguments()
 #######################################
 # The update process. There are 2 phases fo execution, "run" or "update and re-run".
 # Globals:
-#  SCRIPT_LOCATION - location of script executing
+#  INSTALLER_SELF - location of script executing
 # Arguments:
 #  None
 #######################################
-SCRIPT_LOCATION="$(pwd)/installer.sh"
+INSTALLER_SELF="$(pwd)/installer.sh"
 function updater()
 {
   # globals for update
-  LATEST=0
-  UPDATED=0
+  INSTALLER_LATEST=0
+  INSTALLER_UPDATED=0
 
   # remove previous updater script
   rm -f updater.sh
@@ -1117,12 +1073,12 @@ function updater()
   process_updater_arguments "$@"
 
   # called externally by the user, try to update
-  if [[ ${UPDATED} == 0 ]]; then
+  if [[ ${INSTALLER_UPDATED} == 0 ]]; then
     update "$@"
   fi
 
   # called internally after an update or we already at the latest version
-  if [[ ${LATEST} == 1 || ${UPDATED} == 1  ]]; then
+  if [[ ${INSTALLER_LATEST} == 1 || ${INSTALLER_UPDATED} == 1  ]]; then
     main "$@"
   fi
 }

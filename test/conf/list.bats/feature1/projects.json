@@ -1,0 +1,30 @@
+{
+  "bootstrap":
+  {
+      "project": "project11",
+      "http.sslVerify": "false"
+  },
+  "projects": [
+    {
+      "name": "project11",
+      "category": "non default stream",
+      "default": "true",
+      "urls": {
+        "fetch": "https://xyz/project11.git",
+        "push": "ssh://xyz/project11.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash ../project11/alias/install.sh"
+      ]
+    }
+  ]
+}

@@ -2,10 +2,7 @@
   "bootstrap":
   {
       "project": "tools",
-      "urls": {
-        "update": "https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw/installer.sh",
-        "configuration": "https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw/installer.sh"
-      }
+      "http.sslVerify": "false"
   },
   "projects": [
     {

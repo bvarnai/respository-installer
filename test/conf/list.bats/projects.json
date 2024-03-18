@@ -1,0 +1,65 @@
+{
+  "bootstrap":
+  {
+      "project": "project1",
+      "http.sslVerify": "false"
+  },
+  "projects": [
+    {
+      "name": "project1",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "https://xyz/project1.git",
+        "push": "ssh://xyz/project1.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash ../project1/alias/install.sh"
+      ]
+    },
+    {
+      "name": "project2",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "https://xyz/project2.git",
+        "push": "ssh://xyz/project2.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project3",
+      "path": "sub/project3",
+      "category": "test category",
+      "default": "false",
+      "urls": {
+        "fetch": "https://xyz/project3.git",
+        "push": "ssh://xyz/project3.git"
+      },
+      "cloneOptions": "--depth 1",
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true"
+    }
+  ]
+}
