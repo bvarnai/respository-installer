@@ -21,7 +21,7 @@ _common_setup() {
     fi
 
     # start configuration server
-    static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8085 --root ./conf &
+    static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
     echo $! > $BATS_FILE_TMPDIR/.test-server.pid
 
     # change working directory to staging

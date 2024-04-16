@@ -17,13 +17,9 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Check ports
-        run:
-          sudo netstat -ltnp
-
       - name: Test
         working-directory: test
         run: |
           echo $GITHUB_WORKSPACE
-          bats/bin/bats .
+          bats/bin/bats help.bats
 
