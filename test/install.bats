@@ -31,18 +31,21 @@ setup() {
 
 @test "install a project, but unable to clone due to missing branch on origin" {
     run installer.sh --yes install project1
+
     assert_output --partial "[installer] ! Unable to clone repository"
     [ "$status" -eq 1 ]
 }
 
 @test "install a project with doLast" {
     run installer.sh --yes install project4
+
     assert_output --partial "project4 running doLast"
     [ "$status" -eq 0 ]
 }
 
 @test "install projects with sorting" {
     run installer.sh --yes install project5 project4
+
     assert_output --partial "[installer] Sorting projects based on configuration index"
     # project5 doLast should run after project4
     assert_line --index 44 'project4 running doLast'

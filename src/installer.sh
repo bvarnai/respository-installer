@@ -34,10 +34,10 @@ function help()
   echo "Usage: ${filename} [options] [<command>] [arguments]"; \
   echo "Install project repositories."; \
   echo "Commands:"; \
-  echo "  install [project...]  install a project(s) - default command -"; \
+  echo "  install [project...]  install a project(s) - default -"; \
   echo "  list                  list available projects"; \
   echo "  update                update existing projects"; \
-  echo "  help                  print help - this command -"; \
+  echo "  help                  print help - this -"; \
   echo "Options:"; \
   echo "      --use-local-config          use a local copy of the configuration"; \
   echo "      --no-self-update            no not update the script itself"; \
