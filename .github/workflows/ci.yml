@@ -23,6 +23,11 @@ jobs:
           pwd
           touch .test-server.pid
           cat .test-server.pid
+          cd $GITHUB_WORKSPACE/..
+          mkdir tmp
+          cd tmp
+          touch .test-server.pid
+          cat .test-server.pid
 
       - name: Test
         working-directory: test
