@@ -24,10 +24,12 @@ jobs:
           touch .test-server.pid
           cat .test-server.pid
           cd $GITHUB_WORKSPACE/..
+          ls -la
           mkdir tmp
           cd tmp
           touch .test-server.pid
           cat .test-server.pid
+          ls -la
 
       - name: Test
         working-directory: test
