@@ -5,8 +5,9 @@
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
 declare -r INSTALLER_VERSION="2.7.5"
-declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw'}
-declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://ies-iesd-bitbucket.ies.mentorg.com/projects/VSB/repos/tools/raw'}
+# by default this points to latest release
+declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
+declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
 
 # To get the branch specific configuration, we need to know the sCM plaform
 # Supported platforms:
@@ -14,8 +15,7 @@ declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://ies-iesd-bitbuc
 # github - get_stream_configuration_github
 # static - get_stream_configuration_static
 #   This can be used with web servers with static files where the branch is handled as an URI path component.
-#   In this case INSTALLER_CONFIG_URL should be set to the root, for example
-#     INSTALLER_CONFIG_URL=http://xyz will be used as http://xyz/mybranch/projects.json
+#   In this case the last path segment will be treated as the configuration file name
 declare -r INSTALLER_SCM_PLATFORM=${INSTALLER_SCM_PLATFORM:-'bitbucket_server'}
 
 declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_SCM_PLATFORM}"}
@@ -39,7 +39,8 @@ function help()
   echo "  update                update existing projects"; \
   echo "  help                  print help - this command -"; \
   echo "Options:"; \
-  echo "      --use-local                 use local artifacts and do not run self updater"; \
+  echo "      --use-local-config          use a local copy of the configuration"; \
+  echo "      --no-self-update            no not update the script itself"; \
   echo "  -y, --yes                       say 'yes' to user questions"; \
   echo "      --link <target>             linked mode"; \
   echo "      --branch <branch>           project branch, if it exits on remote (falls back to branch in configuration)"; \
@@ -432,7 +433,7 @@ function get_stream_configuration_bitbucket_server()
 {
   local streamBranchSet="$1"
   local streamBranch="$2"
-  local configurationURL="${INSTALLER_CONFIG_URL}/projects.json"
+  local configurationURL="${INSTALLER_CONFIG_URL}"
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${streamBranch}")
@@ -469,13 +470,15 @@ function get_stream_configuration_static()
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
+  local lastPathSegment=$(basename $configurationURL)
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
     { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
+    configurationURL=$(echo $configurationURL | sed s/$lastPathSegment//g)
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}/${streamRefSpec}/projects.json" -o "projects.json")
+    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}${streamRefSpec}/${lastPathSegment}" -o "projects.json")
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch doesn't exists"
       exit 1
@@ -485,7 +488,7 @@ function get_stream_configuration_static()
       return
     fi
   fi
-  if ! curl -s -k -L -# "${configurationURL}/projects.json" -o "projects.json"; then
+  if ! curl -s -k -L -# "${configurationURL}" -o "projects.json"; then
     err "Failed to download stream configuration"
     exit 1
   fi
@@ -972,7 +975,7 @@ function update()
   fi
 
   local nextVersion
-  nextVersion=$(grep "^VERSION" "${temporaryFile}" | awk -F'[="]' '{print $3}')
+  nextVersion=$(grep "^INSTALLER_VERSION" "${temporaryFile}" | awk -F'[="]' '{print $3}')
   local absScriptPath
   absScriptPath=$(readlink -f "${INSTALLER_SELF}")
   if [[ "$INSTALLER_VERSION" < "${nextVersion}" ]]; then

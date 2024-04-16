@@ -31,6 +31,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Usage](#usage)
     - [Command reference](#command-reference)
       - [Options](#options)
+      - [Options for testing](#options-for-testing)
         - [Link mode](#link-mode)
         - [Stream explained](#stream-explained)
       - [help](#help)
@@ -177,11 +178,15 @@ Optional elements are shown in brackets []. For example, command may take a list
 
 #### Options
 
-- `--use-local` - use the local copies of the script/configuration and do not update (for testing)
 - `-y, --yes` - skip user prompts
 - `--link` - use symlinks to target directory
 - `--branch` - overrides `branch` setting in configuration
 - `--stream` - specifies the `stream` of the configuration
+
+#### Options for testing
+
+- `--no-self-update ` - no not update the script itself
+- `--use-local-config` - use a local configuration file
 
 
 ##### Link mode
