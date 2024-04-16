@@ -22,4 +22,5 @@ jobs:
         run: |
           echo $GITHUB_WORKSPACE
           bats/bin/bats help.bats
+          cat "$GITHUB_WORKSPACE/../bats-tmp/.test-server.pid"
 
