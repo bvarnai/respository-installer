@@ -18,5 +18,5 @@ setup() {
 }
 
 teardown_file() {
-    kill "$(< "$BATS_FILE_TMPDIR/.test-server.pid")"
+    kill "$(< "$GITHUB_WORKSPACE/../tmp/.test-server.pid")"
 }

@@ -22,18 +22,18 @@ _common_setup() {
     fi
 
     # start configuration server
-    #static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
-    touch .test-server.pid
+    static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
     #echo $! > $BATS_FILE_TMPDIR/.test-server.pid
+    echo $! > "$GITHUB_WORKSPACE/../tmp/.test-server.pid"
 
     # change working directory to staging
-    cd $BATS_FILE_TMPDIR
+    cd "$GITHUB_WORKSPACE/../tmp" || exit
 
     # stage installer to tmp (so we run on a copy!)
     cp $DIR/../src/installer.sh installer.sh
 
     # make executables visible to PATH
-    PATH="$BATS_FILE_TMPDIR:$PATH"
+    PATH="$GITHUB_WORKSPACE/../tmp:$PATH"
 
     # helper to get the test name directory
     export BATS_TEST_BASENAME="$( basename "$BATS_TEST_FILENAME" )"
