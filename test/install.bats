@@ -25,7 +25,7 @@ setup() {
 @test "install a default project" {
     run installer.sh --yes install
 
-    assert_output --partial '[installer] Now ast commit'
+    assert_output --partial '[installer] Now at commit'
     [ "$status" -eq 0 ]
 }
 
