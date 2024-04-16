@@ -20,6 +20,6 @@ jobs:
       - name: Test
         working-directory: test
         run: |
-        echo $GITHUB_WORKSPACE
-        bats/bin/bats .
+          echo $GITHUB_WORKSPACE
+          bats/bin/bats .
 
