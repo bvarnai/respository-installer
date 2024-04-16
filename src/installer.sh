@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-declare -r INSTALLER_VERSION="2.7.5"
+INSTALLER_VERSION="2.7.5"
 # by default this points to latest release
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
@@ -984,11 +984,14 @@ function update()
     {
       echo "cp \"${temporaryFile}\" \"${absScriptPath}\""
       echo "rm -f \"${temporaryFile}\""
-      echo "echo [updater] Re-running updated script"
+      echo "echo ${LOG_PREFIX} [updater] Re-running updated script"
       echo "exec \"${absScriptPath}\" --skipInstallerUpdate $@"
     } >> updater.sh
 
-    bash ./updater.sh
+    if ! bash ./updater.sh; then
+      err "[updater] Failed to run update"
+      exit 1
+    fi
   else
     log "[updater] No update available"
     rm -f "${temporaryFile}"
