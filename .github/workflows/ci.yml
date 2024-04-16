@@ -19,9 +19,4 @@ jobs:
 
       - name: Test
         working-directory: test
-        run: |
-          bats/bin/bats help.bats
-          cd $GITHUB_WORKSPACE/../tmp
-          ls -la
-
-
+        run: bats/bin/bats .
