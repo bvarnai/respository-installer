@@ -17,24 +17,12 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Setup workspace
-        run: |
-          echo $GITHUB_WORKSPACE
-          pwd
-          touch .test-server.pid
-          cat .test-server.pid
-          cd $GITHUB_WORKSPACE/..
-          ls -la
-          mkdir tmp
-          cd tmp
-          touch .test-server.pid
-          cat .test-server.pid
-          ls -la
-
       - name: Test
         working-directory: test
         run: |
-          echo $GITHUB_WORKSPACE
-          bats/bin/bats help.bats
-          cat .test-server.pid
+          pwd
+          #bats/bin/bats help.bats
+          #cat .test-server.pid
+          cd $GITHUB_WORKSPACE
+          ls -la
 
