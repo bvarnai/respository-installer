@@ -15,6 +15,11 @@ _common_setup() {
     #export BATS_FILE_TMPDIR=~/bats-tmp
     #mkdir -p $BATS_FILE_TMPDIR
 
+    # redirect tmp to the workspace when running on GitHub
+    if [[ -n "$GITHUB_WORKSPACE" ]]; then
+        export BATS_FILE_TMPDIR="$GITHUB_WORKSPACE/../bats-tmp"
+    fi
+
     # start configuration server
     static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
     echo $! > $BATS_FILE_TMPDIR/.test-server.pid
