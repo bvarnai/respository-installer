@@ -17,4 +17,6 @@ jobs:
 
       - name: Test
         working-directory: test
-        run: bats/bin/bats .      
+        run: |
+           pwd
+           bats/bin/bats .      
