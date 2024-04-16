@@ -8,7 +8,8 @@ setup() {
     load 'test_helper/bats-support/load'
     load 'test_helper/bats-assert/load'
 
-    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${BATS_TEST_BASENAME}"
+    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
+    export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
     export INSTALLER_SCM_PLATFORM='static'
 }
 
@@ -51,5 +52,5 @@ setup() {
 
 
 teardown_file() {
-    kill "$(< ".test-server.pid")"
+    kill "$(< "$TEST_FILE_TMPDIR/.test-server.pid")"
 }
