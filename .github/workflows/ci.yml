@@ -23,6 +23,9 @@ jobs:
           pwd
           #bats/bin/bats help.bats
           #cat .test-server.pid
-          cd $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE/..
           ls -la
+          touch .test-server.pid
+          ls -la
+
 
