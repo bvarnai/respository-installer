@@ -17,6 +17,13 @@ jobs:
         with:
           submodules: 'true'
 
+      - name: Setup workspace
+        run: |
+          echo $GITHUB_WORKSPACE
+          pwd
+          touch .test-server.pid
+          cat .test-server.pid
+
       - name: Test
         working-directory: test
         run: |
