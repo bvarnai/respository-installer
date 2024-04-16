@@ -17,7 +17,8 @@ _common_setup() {
 
     # redirect tmp to the workspace when running on GitHub
     if [[ -n "$GITHUB_WORKSPACE" ]]; then
-        export BATS_FILE_TMPDIR="$GITHUB_WORKSPACE/../bats-tmp"
+        export BATS_FILE_TMPDIR="$GITHUB_WORKSPACE/../tmp"
+        mkdir -p $BATS_FILE_TMPDIR
     fi
 
     # start configuration server

@@ -20,12 +20,9 @@ jobs:
       - name: Test
         working-directory: test
         run: |
-          pwd
-          #bats/bin/bats help.bats
+          bats/bin/bats help.bats
           #cat .test-server.pid
-          cd $GITHUB_WORKSPACE/..
-          ls -la
-          touch .test-server.pid
+          cd $GITHUB_WORKSPACE/../tmp
           ls -la
 
 
