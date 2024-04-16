@@ -17,10 +17,9 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: Start test server
-        working-directory: test
-        run: static-web-server/static-web-server --directory-listing --port 8787 --root ./conf
-
       - name: Test
         working-directory: test
-        run: bats/bin/bats .
+        run: |
+        echo $GITHUB_WORKSPACE
+        bats/bin/bats .
+
