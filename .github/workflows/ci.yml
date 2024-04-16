@@ -19,7 +19,7 @@ jobs:
 
       - name: Check ports
         run:
-          sudo netstat -ltnp | grep -w ':8787'
+          sudo netstat -ltnp
 
       - name: Test
         working-directory: test
