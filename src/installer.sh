@@ -710,6 +710,9 @@ function main()
         useLocal=1
         shift
         ;;
+      --skip-self-update) # do nothing just silently ignore
+        shift
+        ;;
       --fetch-all) # fetch all refs not only the specified branch
         fetchAll=1
         shift
@@ -979,13 +982,13 @@ function update()
   local absScriptPath
   absScriptPath=$(readlink -f "${INSTALLER_SELF}")
   if [[ "$INSTALLER_VERSION" < "${nextVersion}" ]]; then
-    printf "${LOG_PREFIX} [updater] Updating \e[31;1m%s\e[0m -> \e[32;1m%s\e[0m\n" "${INSTALLER_VERSION}" "${nextVersion}"
+    printf "${LOG_PREFIX} [updater] Updating %s -> %s\n" "${INSTALLER_VERSION}" "${nextVersion}"
 
     {
       echo "cp \"${temporaryFile}\" \"${absScriptPath}\""
       echo "rm -f \"${temporaryFile}\""
       echo "echo ${LOG_PREFIX} [updater] Re-running updated script"
-      echo "exec \"${absScriptPath}\" --skipInstallerUpdate $@"
+      echo "exec \"${absScriptPath}\" --skip-self-update $@"
     } >> updater.sh
 
     if ! bash ./updater.sh; then
@@ -1014,7 +1017,7 @@ function process_updater_arguments()
   params=
   while (( "$#" )); do
     case "$1" in
-      --use-local) # inhibit update before/after
+      --skip-self-update) # inhibit update before/after
         INSTALLER_UPDATED=1
         shift
         ;;
