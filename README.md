@@ -196,7 +196,7 @@ Optional elements are shown in brackets []. For example, command may take a list
 - `--link` - use symlinks to target directory
 - `--branch` - overrides `branch` setting in configuration
 - `--stream` - specifies the `stream` of the configuration
-- `--git-quiet` - pass quite to git commands
+- `--git-quiet` - pass quite to git commands (not everything is suppressed)
 
 #### Options for development/testing
 
