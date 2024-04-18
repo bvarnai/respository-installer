@@ -43,6 +43,13 @@ setup() {
     [ "$status" -eq 0 ]
 }
 
+@test "install project with doLast error" {
+    run installer.sh --yes install project6
+
+    assert_output --partial 'project6 running doLast'
+    [ "$status" -eq 1 ]
+}
+
 @test "install projects with sorting" {
     run installer.sh --yes install project5 project4
 
@@ -52,7 +59,6 @@ setup() {
     assert_line --index 64 'project5 running doLast'
     [ "$status" -eq 0 ]
 }
-
 
 teardown_file() {
     kill "$(< "$TEST_FILE_TMPDIR/.test-server.pid")"

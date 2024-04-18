@@ -91,6 +91,26 @@
       "doLast": [
         "bash doLast.sh"
       ]
+    },
+    {
+      "name": "project6",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project3.git"
+      },
+      "options": {
+        "clone": "--depth 1"
+      },
+      "configuration": [
+        "core.autocrlf false",
+        "core.safecrlf false"
+      ],
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash doLastWithError.sh"
+      ]
     }
   ]
 }
