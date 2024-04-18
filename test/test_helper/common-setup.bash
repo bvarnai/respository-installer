@@ -18,6 +18,10 @@ _common_setup() {
     # redirect on GitHub
     if [[ -n "$GITHUB_WORKSPACE" ]]; then
         export TEST_FILE_TMPDIR="$GITHUB_WORKSPACE/../tmp"
+        if [[ -d "$TEST_FILE_TMPDIR" ]]; then
+            # delete any previous artifacts
+            rm -rf "${TEST_FILE_TMPDIR}"
+        fi
         mkdir -p "$TEST_FILE_TMPDIR"
     fi
 
@@ -41,4 +45,7 @@ _common_setup() {
     export TEST_BASENAME
 
     export TEST_SERVER_URL="http://localhost:8787"
+
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
 }

@@ -318,21 +318,24 @@ function gitConfig()
     path="${project}"
   fi
 
-  log "Setting git config(s)"
   local gitConfigs
   gitConfigs=$(echo "${configuration}" | "${JQ}" -r ".configuration[]?")
-  pushd "${path}" > /dev/null || exit
-  while IFS= read -r gitConfig; do
-    # split string by whitespace to key-value pairs
-    # shellcheck disable=SC2206
-    local keyValue=($gitConfig)
-    if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
-      err "Unable to set local git configuration"
-      popd > /dev/null || exit
-      exit 1
-    fi
-  done <<< "${gitConfigs}"
-  popd > /dev/null || exit
+  if [[ -n "$gitConfigs" ]]; then
+    log "Setting git config(s)"
+    pushd "${path}" > /dev/null || exit
+    while IFS= read -r gitConfig; do
+      # split string by whitespace to key-value pairs
+      local keyValue
+      # shellcheck disable=SC2206
+      keyValue=($gitConfig)
+      if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
+        err "Unable to set local git configuration"
+        popd > /dev/null || exit
+        exit 1
+      fi
+    done <<< "${gitConfigs}"
+    popd > /dev/null || exit
+  fi
 }
 
 #######################################
@@ -355,19 +358,22 @@ function doLast()
       path="${project}"
     fi
 
-    log "Running doLast command(s)"
     local commands
     commands=$(echo "${configuration}" | "${JQ}" -r ".doLast[]?")
-    pushd "${path}" > /dev/null || exit
-    while IFS= read -r command; do
-      local trimmedCommand=$(echo "${command}" | xargs)
-      if ! $trimmedCommand; then
-        err "Failed to execute doLast command"
-        popd > /dev/null || exit
-        exit 1
-      fi
-    done <<< "${commands}"
-    popd > /dev/null || exit
+    if [[ -n "$commands" ]]; then
+      log "Running doLast command(s)"
+      pushd "${path}" > /dev/null || exit
+      while IFS= read -r command; do
+        local trimmedCommand
+        trimmedCommand=$(echo "${command}" | xargs)
+        if ! $trimmedCommand; then
+          err "Failed to execute doLast command"
+          popd > /dev/null || exit
+          exit 1
+        fi
+      done <<< "${commands}"
+      popd > /dev/null || exit
+    fi
   else
     log "Skipping installation/modification of globals in CI mode"
   fi
@@ -403,8 +409,8 @@ function precondition_user_confirm_uncommited()
 # Returns:
 #   None
 #######################################
+# shellcheck disable=SC2317
 function urlencode() {
-  # urlencode <string>
   oldLC_COLLATE=$LC_COLLATE
   LC_COLLATE=C
 
@@ -429,6 +435,7 @@ function urlencode() {
 # Returns:
 #   None
 #######################################
+# shellcheck disable=SC2317
 function get_stream_configuration_bitbucket_server()
 {
   local streamBranchSet="$1"
@@ -465,12 +472,14 @@ function get_stream_configuration_bitbucket_server()
 # Returns:
 #   None
 #######################################
+# shellcheck disable=SC2317
 function get_stream_configuration_static()
 {
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
-  local lastPathSegment=$(basename $configurationURL)
+  local lastPathSegment
+  lastPathSegment=$(basename $configurationURL)
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
     { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
@@ -558,24 +567,6 @@ function get_jq()
   fi
 }
 
-#######################################
-# Checks if we are running in the tools project folder. This was the old way.
-# Arguments:
-#   None
-# Returns:
-#   None
-#######################################
-function precondition_in_tools()
-{
-  local dir
-  dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-  if [[ $(basename "${dir}") == "tools" ]]; then
-    err "It seems you are running in 'tools' folder..."
-    err "Due to compatibility reasons, please run the script from the parent folder."
-    exit 1
-  fi
-}
-
 declare -r LOG_PREFIX="[installer]"
 
 #######################################
@@ -617,13 +608,14 @@ function check_remote_refs()
   configRefs=$(git config  --local --get-all remote.origin.fetch)
   # remove all remote refs from local git config file
   git config --unset-all "remote.origin.fetch"
+  # shellcheck disable=SC2206
   refsArray=($configRefs)
-  for ref in "${refs_array[@]}"; do
+  for ref in "${refsArray[@]}"; do
     remoteBranchName=${ref#*+refs/heads/}
     remoteBranchName=${remoteBranchName%:*}
     # # first check if remote branch exists on remote?
     if git ls-remote --exit-code origin "refs/heads/${remoteBranchName}" > /dev/null 2>&1; then
-        if [[ $remoteBranchName=="*" ]]; then
+        if [[ $remoteBranchName == "*" ]]; then
             git config --add remote.origin.fetch "+refs/heads/${remoteBranchName}:refs/remotes/origin/${remoteBranchName}"
         fi
         # Add a ref to existing remote branch
@@ -739,7 +731,6 @@ function main()
   eval set -- "${params}"
 
   # check preconditions
-  #precondition_in_tools
   precondition_nested_repository
 
   set_jq
@@ -781,6 +772,8 @@ function main()
     # projects specified by user
     local projectNames
     projectNames=$( echo "${params}" | xargs echo )
+
+    # shellcheck disable=SC2206
     projectNamesArray=($projectNames)
   else
     # projects specified by exsiting projects in the workspace
@@ -806,6 +799,7 @@ function main()
     projectNames=()
     local projectNamePredicates
     projectNamePredicates=$( find "$workspace" -maxdepth 1 -type d -printf '%P '  | xargs echo )
+    # shellcheck disable=SC2206
     local projectNamePredicatesArray=($projectNamePredicates)
     for projectNamePredicate in "${projectNamePredicatesArray[@]}"
     do
@@ -916,7 +910,14 @@ function list_projects()
       currentProjectPath="${currentProjectConfigurationArray[3]}"
     fi
 
-    printf "%-20s (category: %-11s, default: %-5s, path: %s)\n" "${currentProjectConfigurationArray[0]}" "${currentProjectConfigurationArray[1]}" "${currentProjectConfigurationArray[2]}" "${currentProjectPath}"
+    local currentProjectCategory
+    if [[ -z "${currentProjectConfigurationArray[1]}" ]]; then
+      currentProjectCategory="unset"
+    else
+      currentProjectCategory="${currentProjectConfigurationArray[1]}"
+    fi
+
+    printf "%-20s (category: %-11s, default: %-5s, path: %s)\n" "${currentProjectConfigurationArray[0]}" "${currentProjectCategory}" "${currentProjectConfigurationArray[2]}" "${currentProjectPath}"
   done
 }
 

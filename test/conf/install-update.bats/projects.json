@@ -1,0 +1,43 @@
+{
+  "bootstrap": "project1",
+  "projects": [
+    {
+      "name": "project1",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
+      },
+      "branch": "master",
+      "update": "true"
+    },
+    {
+      "name": "project2",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install-update.bats/project2.git"
+      },
+      "branch": "master",
+      "update": "false"
+    },
+    {
+      "name": "project3",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
+      },
+      "branch": "master",
+      "update": "false"
+    },
+    {
+      "name": "project4",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
+      },
+      "branch": "master",
+      "update": "true"
+    }
+  ]
+}
