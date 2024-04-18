@@ -28,6 +28,16 @@
       },
       "branch": "master",
       "update": "false"
+    },
+    {
+      "name": "project4",
+      "category": "generic",
+      "default": "true",
+      "urls": {
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
+      },
+      "branch": "master",
+      "update": "true"
     }
   ]
 }

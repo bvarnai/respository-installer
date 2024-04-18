@@ -54,7 +54,36 @@ setup() {
 }
 
 @test "update to latest if update is allowed from different branch" {
-    :
+    # install project as-is
+    run installer.sh --yes install project4
+    assert_output --partial "a279539 Initial commit"
+
+    # add new changes
+    pushd project4
+    touch change.txt
+    git checkout -b change
+    git add .
+
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch != "change" ]]; then
+        false
+    fi
+    popd
+
+    # install again
+    run installer.sh --yes install project4
+
+    assert_output --partial "[installer] Branch 'master' is selected"
+    assert_output --partial "[installer] Resetting to latest revision before updating"
+    assert_output --partial "a279539 Initial commit"
+    [ "$status" -eq 0 ]
+
+    pushd project4
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch != "master" ]]; then
+        false
+    fi
+    popd
 }
 
 
