@@ -166,7 +166,7 @@ function install_project()
       log "Existing repository found, updating"
       pushd "${path}" > /dev/null || exit
       # set remote url
-      if ! git remote set-url origin "${fetchURL}"; then
+      if ! git remote set-url origin "${fetchURL}" > /dev/null; then
         err "Unable to set remote URL"
         exit 1
       fi
@@ -186,8 +186,8 @@ function install_project()
       configRefs=$(git config  --local --get-all remote.origin.fetch)
       refsArray=($configRefs)
       if [[ "${refsArray[*]}" =~ "*" ]]; then
-        git config --unset-all "remote.origin.fetch"
-        git config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+        git config --unset-all "remote.origin.fetch" > /dev/null
+        git config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" > /dev/null
       else
         if ! git config --get-regex remote.origin.fetch "refs/heads/${branch}" > /dev/null 2>&1; then
           if ! git config --add remote.origin.fetch "+refs/heads/${branch}:refs/remotes/origin/${branch}" > /dev/null 2>&1; then
@@ -218,7 +218,7 @@ function install_project()
         fi
       fi
 
-      if ! git checkout "${branch}"; then
+      if ! git checkout "${branch}" $quite; then
         err "Unable to checkout branch"
         exit 1
       fi
@@ -330,7 +330,7 @@ function gitConfig()
       local keyValue
       # shellcheck disable=SC2206
       keyValue=($gitConfig)
-      if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
+      if ! git config --local "${keyValue[0]}" "${keyValue[1]}" > /dev/null; then
         err "Unable to set local git configuration"
         popd > /dev/null || exit
         exit 1
@@ -609,7 +609,7 @@ function check_remote_refs()
   # retrieve all remote refs from local git config file
   configRefs=$(git config  --local --get-all remote.origin.fetch)
   # remove all remote refs from local git config file
-  git config --unset-all "remote.origin.fetch"
+  git config --unset-all "remote.origin.fetch" > /dev/null
   # shellcheck disable=SC2206
   refsArray=($configRefs)
   for ref in "${refsArray[@]}"; do
