@@ -1,6 +1,6 @@
 # installer - a configuration based repository installer
 
-![ci](https://github.com/bvarnai/respository-installer/actions/workflows/ci.yml/badge.svg)
+![CI badge](https://github.com/bvarnai/respository-installer/actions/workflows/ci.yml/badge.svg)
 
 **installer** is a tool to help users to work with multiple *Git* repositories from the initial clone to getting updates.
 
