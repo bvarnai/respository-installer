@@ -80,6 +80,7 @@ function install_project()
   local cloneOptionsSet="$4"
   local cloneOptions="$5"
   local fetchAll="$6"
+  local gitQuiet="$7"
   local project
   project=$(echo "${configuration}" | "${JQ}" -r '.name')
   log "Installing project '${project}'"
@@ -121,10 +122,10 @@ function install_project()
   fi
 
   local quite
-  if [[ -z "${VSB_CI}" ]]; then
-    quite=""
-  else
+  if [[ $gitQuiet == 1 ]]; then
     quite="--quiet"
+  else
+    quite=""
   fi
 
   # in link mode, create symbolic links first
@@ -645,6 +646,7 @@ function main()
   local cloneOptions
   local useLocalConfiguration
   local fetchAll
+  local gitQuiet
   yes=0
   list=0
   update=0
@@ -657,6 +659,7 @@ function main()
   cloneOptions="unset"
   useLocalConfiguration=0
   fetchAll=0
+  gitQuiet=0
   params=
   while (( "$#" )); do
     case "$1" in
@@ -711,6 +714,10 @@ function main()
         ;;
       -y|--yes) # no questions will be asked
         yes=1
+        shift
+        ;;
+      --git-quiet) # skip ahead
+        gitQuiet=1
         shift
         ;;
       --) # end argument parsing
@@ -781,25 +788,10 @@ function main()
     # shellcheck disable=SC2206
     projectNamesArray=($projectNames)
   else
-    # projects specified by exsiting projects in the workspace
-    log "Searching for existing projects in the workspace"
-
-    if [[ -z "$VSB_TOOLS_HOME" ]]; then
-      err "Environment variable 'VSB_TOOLS_HOME' is not specified"
-      exit 1
-    fi
+    log "Searching for existing projects in the current directory (workspace)"
 
     local workspace
-    if [[ $(uname -s) == "Linux" ]]; then
-      workspace="$VSB_TOOLS_HOME/.."
-    else
-      workspace=$(cygpath -u "$VSB_TOOLS_HOME/..")
-    fi
-
-    if [[ ! -d "$workspace" ]]; then
-      err "Workspace directory '$workspace' is not valid"
-      exit 1
-    fi
+    workspace=$(pwd)
 
     projectNames=()
     local projectNamePredicates
@@ -886,7 +878,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}"
   done
 }
 
@@ -1050,6 +1042,9 @@ function process_updater_arguments()
         shift
         ;;
       --use-local-config) # skip ahead
+        shift
+        ;;
+      --git-quiet) # skip ahead
         shift
         ;;
       --) # end argument parsing
