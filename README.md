@@ -142,7 +142,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
 
 | Elements       |                          |       | Description |
 | -------------- | ------------------------ | ----  | ----------- |
-| bootstrap      |                          |       | Bootstrap project is always added. For example it can be used for user-defined `doLast` scripts used during installation. Referenced by `name` in `projects`          |
+| bootstrap      |                          |       | Bootstrap project is always added implicitly. Referenced by `name` in `projects`          |
 | projects       |                          |       | Array of projects |
 |                | name                     |       | Project name |
 |                | path                     |       | Project path. Relative to workspace root. If not specified `name` will be used as path *[optional]* |
@@ -155,16 +155,18 @@ The configuration file is called `projects.json` and it's downloaded using the `
 |                |                          | clone | Options for `clone` command. For example `--depth 1`" would result in a shallow clone *[optional]* |
 |                | configuration            |       | Array of *Git* configuration `config` options, repository scope. Add `--global` for global scope *[optional]* |
 |                | branch                   |       | Default branch |
-|                | update                   |       | Whether to force update the repository. This should be set to `true` for *tooling* related projects |
+|                | update                   |       | Whether to force the repository update and reset to latest on the default branch |
 |                | doLast                   |       | Array of shell commands to execute after repository update *[optional]* |
 
 
 :memo: Additional notes
-- A bootstrap project is simply a project that is always installed and updated. This is where I keep all DevOps related scripts
+- A bootstrap project is simply a project that is always installed
 - :warning: A bootstrap project must be set to default `default==true` as well
 - Different `fetch` and `push` URLs can be used to reduce load in *Git* hosting server, for example use `https` for `fetch` and `ssh` for `push`
 - Setting `update==false` means repositories are fetched but not updated. This is desirable for development projects, so working branches are felt unchanged
-- :warning: Setting `update==true` means repositories are fetched, reset and updated. This helps avoid clients get into an inconsistent state
+- :warning: Setting `update==true` means repositories are fetched, reset and updated. This also means the branch will be switched to the default branch
+
+:bulb: You can use a bootstap project to host your DevOps scripts etc. for example doLast scripts
 
 ## Usage
 
