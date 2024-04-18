@@ -73,7 +73,7 @@ Since the configuration is also branch specific, we need to know how to get a br
 Next get the **installer** with `curl` for the first time
 
 ```bash
-curl -o installer.sh -L $INSTALLER_SELF_URL && chmod +x installer.sh
+curl -L $INSTALLER_SELF_URL -o installer.sh && chmod +x installer.sh
 ```
 
 Finally run **installer** in the current working directory.
