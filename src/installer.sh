@@ -643,7 +643,7 @@ function main()
   local streamBranch
   local cloneOptionsSet
   local cloneOptions
-  local useLocal
+  local useLocalConfiguration
   local fetchAll
   yes=0
   list=0
@@ -655,7 +655,7 @@ function main()
   streamBranch="unset"
   cloneOptionsSet=0
   cloneOptions="unset"
-  useLocal=0
+  useLocalConfiguration=0
   fetchAll=0
   params=
   while (( "$#" )); do
@@ -698,8 +698,8 @@ function main()
         cloneOptions="$1"
         shift
         ;;
-      --use-local) # use local copy of configuration and dependencies
-        useLocal=1
+      --use-local-config) # use local copy of configuration and dependencies
+        useLocalConfiguration=1
         shift
         ;;
       --skip-self-update) # do nothing just silently ignore
@@ -736,7 +736,7 @@ function main()
   set_jq
 
   # update if needed
-  if [[ "${useLocal}" == "0" ]]; then
+  if [[ "${useLocalConfiguration}" == "0" ]]; then
 
     # get/update stream configuration
     $INSTALLER_GET_STREAM_CONFIGURATION "${streamBranchSet}" "${streamBranch}"
@@ -744,7 +744,12 @@ function main()
     # get jq executable (external dependency)
     get_jq
   else
-    log "Using local copy of the configuration and dependencies (might be out-of-date)"
+    if [[ ! -f "projects.json" ]]; then
+      err "No local configuration found"
+      exit 1
+    else
+      log "Using local configuration"
+    fi
   fi
 
   # list projects
@@ -1042,6 +1047,9 @@ function process_updater_arguments()
         shift
         ;;
       --fetch-all) # skip ahead
+        shift
+        ;;
+      --use-local-config) # skip ahead
         shift
         ;;
       --) # end argument parsing

@@ -16,7 +16,7 @@ setup() {
 @test "install project (including bootstrap)" {
     run installer.sh --yes install project2
 
-    assert_output --partial '[installer] Now at commit'
+    assert_output --partial "[installer] Now at commit"
     # check if bootstrap is added
     assert_output --partial "[installer] Adding bootstrap project 'project3' implicitly"
     [ "$status" -eq 0 ]
@@ -25,7 +25,7 @@ setup() {
 @test "install default project" {
     run installer.sh --yes install
 
-    assert_output --partial '[installer] Now at commit'
+    assert_output --partial "[installer] Now at commit"
     [ "$status" -eq 0 ]
 }
 
@@ -46,7 +46,7 @@ setup() {
 @test "install project with doLast error" {
     run installer.sh --yes install project6
 
-    assert_output --partial 'project6 running doLast'
+    assert_output --partial "project6 running doLast"
     [ "$status" -eq 1 ]
 }
 
@@ -55,8 +55,8 @@ setup() {
 
     assert_output --partial "[installer] Sorting projects based on configuration index"
     # project5 doLast should run after project4
-    assert_line --index 43 'project4 running doLast'
-    assert_line --index 63 'project5 running doLast'
+    assert_line --index 43 "project4 running doLast"
+    assert_line --index 63 "project5 running doLast"
     [ "$status" -eq 0 ]
 }
 
@@ -65,7 +65,7 @@ setup() {
     run installer.sh --yes install project2
 
     assert_output --partial "[installer] Existing repository found, updating"
-    assert_output --partial '[installer] Now at commit'
+    assert_output --partial "[installer] Now at commit"
     # check if bootstrap is added
     assert_output --partial "[installer] Adding bootstrap project 'project3' implicitly"
     [ "$status" -eq 0 ]

@@ -15,26 +15,24 @@ setup() {
 
 
 @test "list projects from default stream" {
-
     run installer.sh list
 
     assert_output --partial "Stream branch 'default' is selected"
-    assert_output --partial 'Available projects:'
-    assert_output --partial 'project1'
-    assert_output --partial 'project2'
-    assert_output --partial 'project3'
-    assert_output --partial 'category: test category'
-    assert_output --partial 'path: sub/project3'
+    assert_output --partial "Available projects:"
+    assert_output --partial "project1"
+    assert_output --partial "project2"
+    assert_output --partial "project3"
+    assert_output --partial "category: test category"
+    assert_output --partial "path: sub/project3"
 }
 
 @test "list projects from non default stream" {
-
     run installer.sh --stream feature1 list
 
     assert_output --partial "Stream branch 'feature1' is selected"
-    assert_output --partial 'Available projects:'
-    assert_output --partial 'project11'
-    assert_output --partial 'category: non default stream'
+    assert_output --partial "Available projects:"
+    assert_output --partial "project11"
+    assert_output --partial "category: non default stream"
 }
 
 teardown_file() {

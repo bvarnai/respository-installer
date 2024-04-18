@@ -30,7 +30,7 @@ setup() {
 
 @test "update to higher version" {
     # set a lower version, expecting to update
-    sed -i '/INSTALLER_VERSION=/c\declare -r INSTALLER_VERSION="1.0.0"' installer.sh
+    sed -i '/INSTALLER_VERSION=/c\INSTALLER_VERSION="1.0.0"' installer.sh
 
     run installer.sh help
 
@@ -50,7 +50,7 @@ setup() {
 
 @test "no update to lower versions" {
     # set a higher version, no update is expected
-    sed -i '/INSTALLER_VERSION=/c\declare -r INSTALLER_VERSION="9.9.9"' installer.sh
+    sed -i '/INSTALLER_VERSION=/c\INSTALLER_VERSION="9.9.9"' installer.sh
 
     run installer.sh help
 
@@ -61,7 +61,7 @@ setup() {
 
 @test "no update if skipped" {
     # set a lower version, expecting to update, but skipped
-    sed -i '/INSTALLER_VERSION=/c\declare -r INSTALLER_VERSION="9.9.9"' installer.sh
+    sed -i '/INSTALLER_VERSION=/c\INSTALLER_VERSION="9.9.9"' installer.sh
 
     run installer.sh --skip-self-update help
 
@@ -71,7 +71,7 @@ setup() {
 
 @test "bad update url" {
     # set a lower version, expecting to update
-    sed -i '/INSTALLER_VERSION=/c\declare -r INSTALLER_VERSION="1.0.0"' installer.sh
+    sed -i '/INSTALLER_VERSION=/c\INSTALLER_VERSION="1.0.0"' installer.sh
 
     export INSTALLER_SELF_URL="http://xyz/installer.sh"
 
