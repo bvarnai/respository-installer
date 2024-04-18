@@ -10,7 +10,7 @@ setup() {
 
     export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_SCM_PLATFORM='static'
+    export INSTALLER_CONFIG_SCM='static'
 }
 
 @test "install project (including bootstrap)" {
@@ -70,6 +70,15 @@ setup() {
     assert_output --partial "[installer] Adding bootstrap project 'project3' implicitly"
     [ "$status" -eq 0 ]
 }
+
+@test "intall project with quite git" {
+    # this test has dependency on previous test case
+    run installer.sh --yes --git-quiet install project7
+
+    refute_output --partial "HEAD is now at"
+    [ "$status" -eq 0 ]
+}
+
 
 teardown_file() {
     kill "$(< "$TEST_FILE_TMPDIR/.test-server.pid")"

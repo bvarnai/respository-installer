@@ -26,7 +26,8 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Table of contents](#table-of-contents)
   - [Demo](#demo)
   - [Installation](#installation)
-    - [Install prerequisites](#install-prerequisites)
+    - [Supported SCM types](#supported-scm-types)
+    - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
     - [Configuration file](#configuration-file)
@@ -55,15 +56,24 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
 
 First, the following environment variables must be set
 
-- `INSTALLER_SELF_URL` the URL of `installer.sh` script. By default, it should be set to *https://raw.githubusercontent.com/bvarnai/respository-installer/readme/src/installer.sh*
-- `INSTALLER_CONFIG_URL` the URL of `projects.json` configuration file
+- `INSTALLER_CONFIG_URL` - URL of the configuration `projects.json`
+- `INSTALLER_CONFIG_SCM` - type of SCM (GitHub etc.) used for the configuration
+
+### Supported SCM types
+
+Since the configuration is also branch specific, we need to know how to get a branch from the SCM. This means assembling a URL used by `curl` to get the configuration. The following SCM type are supported:
+  - bitbucket_server - Bitbucket server (any variant)
+  - github - get_stream_configuration_github
+  - static - get_stream_configuration_static
+
+:warning: This is only used for configuration discovery, you can use any platform for your projects
 
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
 
 Next get the **installer** with `curl` for the first time
 
 ```bash
-curl -o installer.sh -L $INSTALLER_SELF_URL && chmod +x installer.sh
+curl -L $INSTALLER_SELF_URL -o installer.sh && chmod +x installer.sh
 ```
 
 Finally run **installer** in the current working directory.
@@ -73,14 +83,14 @@ Finally run **installer** in the current working directory.
 ```
 :tada: Once downloaded **installer** will upgrade itself, no need to run `curl` again.
 
-### Install prerequisites
+### Prerequisites
 
 Following tools are required and must be installed
   - `git`
   - `curl`
   - `bash` >= 4.0.0
 
-:warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself and it's platform specific
+:warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself if not available. This step is platform specific
 
 Supported platforms
 - Linux amd64
@@ -186,12 +196,12 @@ Optional elements are shown in brackets []. For example, command may take a list
 - `--link` - use symlinks to target directory
 - `--branch` - overrides `branch` setting in configuration
 - `--stream` - specifies the `stream` of the configuration
+- `--git-quiet` - pass quite to git commands (not everything is suppressed)
 
 #### Options for development/testing
 
 - `--skip-self-update` - skip the script update step
 - `--use-local-config` - use a local configuration file
-
 
 ##### Link mode
 

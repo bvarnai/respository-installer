@@ -9,16 +9,16 @@ INSTALLER_VERSION="2.7.5"
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
 
-# To get the branch specific configuration, we need to know the sCM plaform
+# To get the branch specific configuration, we need to know the SCM plaform
 # Supported platforms:
 # bitbucket_server - Bitbucket on-prem server (any variant)
 # github - get_stream_configuration_github
 # static - get_stream_configuration_static
 #   This can be used with web servers with static files where the branch is handled as an URI path component.
 #   In this case the last path segment will be treated as the configuration file name
-declare -r INSTALLER_SCM_PLATFORM=${INSTALLER_SCM_PLATFORM:-'bitbucket_server'}
+declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'bitbucket_server'}
 
-declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_SCM_PLATFORM}"}
+declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
 
 #######################################
 # Displays help.
@@ -47,6 +47,7 @@ function help()
   echo "      --stream <branch>           development stream (defaults to master)"; \
   echo "      --clone-options <branch>    clone options (falls back to cloneOptions in configuration)"; \
   echo "      --fetch-all                 fetch all remotes"; \
+  echo "      --git-quiet                 run git commands with --quite"; \
   echo ""; \
   echo "More information at <TBD>" 1>&2; exit 0;
 }
@@ -80,6 +81,7 @@ function install_project()
   local cloneOptionsSet="$4"
   local cloneOptions="$5"
   local fetchAll="$6"
+  local gitQuiet="$7"
   local project
   project=$(echo "${configuration}" | "${JQ}" -r '.name')
   log "Installing project '${project}'"
@@ -121,10 +123,10 @@ function install_project()
   fi
 
   local quite
-  if [[ -z "${VSB_CI}" ]]; then
-    quite=""
-  else
+  if [[ $gitQuiet == 1 ]]; then
     quite="--quiet"
+  else
+    quite=""
   fi
 
   # in link mode, create symbolic links first
@@ -645,6 +647,7 @@ function main()
   local cloneOptions
   local useLocalConfiguration
   local fetchAll
+  local gitQuiet
   yes=0
   list=0
   update=0
@@ -657,6 +660,7 @@ function main()
   cloneOptions="unset"
   useLocalConfiguration=0
   fetchAll=0
+  gitQuiet=0
   params=
   while (( "$#" )); do
     case "$1" in
@@ -711,6 +715,10 @@ function main()
         ;;
       -y|--yes) # no questions will be asked
         yes=1
+        shift
+        ;;
+      --git-quiet) # skip ahead
+        gitQuiet=1
         shift
         ;;
       --) # end argument parsing
@@ -781,25 +789,10 @@ function main()
     # shellcheck disable=SC2206
     projectNamesArray=($projectNames)
   else
-    # projects specified by exsiting projects in the workspace
-    log "Searching for existing projects in the workspace"
-
-    if [[ -z "$VSB_TOOLS_HOME" ]]; then
-      err "Environment variable 'VSB_TOOLS_HOME' is not specified"
-      exit 1
-    fi
+    log "Searching for existing projects in the current directory (workspace)"
 
     local workspace
-    if [[ $(uname -s) == "Linux" ]]; then
-      workspace="$VSB_TOOLS_HOME/.."
-    else
-      workspace=$(cygpath -u "$VSB_TOOLS_HOME/..")
-    fi
-
-    if [[ ! -d "$workspace" ]]; then
-      err "Workspace directory '$workspace' is not valid"
-      exit 1
-    fi
+    workspace=$(pwd)
 
     projectNames=()
     local projectNamePredicates
@@ -886,7 +879,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}"
   done
 }
 
@@ -1050,6 +1043,9 @@ function process_updater_arguments()
         shift
         ;;
       --use-local-config) # skip ahead
+        shift
+        ;;
+      --git-quiet) # skip ahead
         shift
         ;;
       --) # end argument parsing

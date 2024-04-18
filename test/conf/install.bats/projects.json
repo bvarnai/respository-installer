@@ -111,6 +111,16 @@
       "doLast": [
         "bash doLastWithError.sh"
       ]
+    },
+    {
+      "name": "project7",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project3.git"
+      },
+      "branch": "master",
+      "update": "true"
     }
   ]
 }

@@ -10,7 +10,7 @@ setup() {
 
     export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_SCM_PLATFORM='static'
+    export INSTALLER_CONFIG_SCM='static'
 }
 
 @test "update to latest if update is allowed" {
@@ -20,6 +20,11 @@ setup() {
 
     # add new changes
     pushd project1
+
+    # just here
+    git config --local user.email "you@example.com"
+    git config --local user.name "Your Name"
+
     touch change.txt
     git add .
     git commit -m "Add change"
@@ -39,6 +44,11 @@ setup() {
 
     # add new changes
     pushd project3
+
+    # just here
+    git config --local user.email "you@example.com"
+    git config --local user.name "Your Name"
+
     touch change.txt
     git add .
     git commit -m "Add change"
@@ -60,6 +70,11 @@ setup() {
 
     # add new changes
     pushd project4
+
+    # just here
+    git config --local user.email "you@example.com"
+    git config --local user.name "Your Name"
+
     touch change.txt
     git checkout -b change
     git add .
