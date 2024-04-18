@@ -47,6 +47,7 @@ function help()
   echo "      --stream <branch>           development stream (defaults to master)"; \
   echo "      --clone-options <branch>    clone options (falls back to cloneOptions in configuration)"; \
   echo "      --fetch-all                 fetch all remotes"; \
+  echo "      --git-quiet                 run git commands with --quite"; \
   echo ""; \
   echo "More information at <TBD>" 1>&2; exit 0;
 }

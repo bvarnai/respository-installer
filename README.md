@@ -27,7 +27,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Demo](#demo)
   - [Installation](#installation)
     - [Supported SCM types](#supported-scm-types)
-    - [Install prerequisites](#install-prerequisites)
+    - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
     - [Configuration file](#configuration-file)
@@ -83,7 +83,7 @@ Finally run **installer** in the current working directory.
 ```
 :tada: Once downloaded **installer** will upgrade itself, no need to run `curl` again.
 
-### Install prerequisites
+### Prerequisites
 
 Following tools are required and must be installed
   - `git`

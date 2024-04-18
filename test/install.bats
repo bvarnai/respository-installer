@@ -71,6 +71,15 @@ setup() {
     [ "$status" -eq 0 ]
 }
 
+@test "intall project with quite git" {
+    # this test has dependency on previous test case
+    run installer.sh --yes --git-quiet install project7
+
+    refute_output --partial "HEAD is now at"
+    [ "$status" -eq 0 ]
+}
+
+
 teardown_file() {
     kill "$(< "$TEST_FILE_TMPDIR/.test-server.pid")"
 }
