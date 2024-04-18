@@ -9,16 +9,16 @@ INSTALLER_VERSION="2.7.5"
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
 
-# To get the branch specific configuration, we need to know the sCM plaform
+# To get the branch specific configuration, we need to know the SCM plaform
 # Supported platforms:
 # bitbucket_server - Bitbucket on-prem server (any variant)
 # github - get_stream_configuration_github
 # static - get_stream_configuration_static
 #   This can be used with web servers with static files where the branch is handled as an URI path component.
 #   In this case the last path segment will be treated as the configuration file name
-declare -r INSTALLER_SCM_PLATFORM=${INSTALLER_SCM_PLATFORM:-'bitbucket_server'}
+declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'bitbucket_server'}
 
-declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_SCM_PLATFORM}"}
+declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
 
 #######################################
 # Displays help.
