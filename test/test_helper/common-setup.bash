@@ -2,10 +2,11 @@
 
 _common_setup() {
     if [[ $(uname -s) == "Linux" ]]; then
-        SERVER_EXECUTABLE=static-web-server
+        TEST_SERVER_EXECUTABLE="static-web-server/static-web-server"
     else
-        SERVER_EXECUTABLE=static-web-server.exe
+        TEST_SERVER_EXECUTABLE="static-web-server/static-web-server.exe"
     fi
+    export TEST_SERVER_EXECUTABLE
 
     # get the containing directory of this file
     # use $BATS_TEST_FILENAME instead of ${BASH_SOURCE[0]} or $0,
@@ -23,7 +24,7 @@ _common_setup() {
     export TEST_FILE_TMPDIR
 
     # start configuration server
-    static-web-server/$SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
+    $TEST_SERVER_EXECUTABLE --directory-listing --port 8787 --root ./conf &
     echo $! > "$TEST_FILE_TMPDIR/.test-server.pid"
 
     # change working directory to staging

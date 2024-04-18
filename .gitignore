@@ -1,1 +1,2 @@
 build
+/test/conf/self-update.bats/installer.sh

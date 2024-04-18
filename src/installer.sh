@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-declare -r INSTALLER_VERSION="2.7.5"
+INSTALLER_VERSION="2.7.5"
 # by default this points to latest release
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
@@ -34,10 +34,10 @@ function help()
   echo "Usage: ${filename} [options] [<command>] [arguments]"; \
   echo "Install project repositories."; \
   echo "Commands:"; \
-  echo "  install [project...]  install a project(s) - default command -"; \
+  echo "  install [project...]  install a project(s) - default -"; \
   echo "  list                  list available projects"; \
   echo "  update                update existing projects"; \
-  echo "  help                  print help - this command -"; \
+  echo "  help                  print help - this -"; \
   echo "Options:"; \
   echo "      --use-local-config          use a local copy of the configuration"; \
   echo "      --no-self-update            no not update the script itself"; \
@@ -710,6 +710,9 @@ function main()
         useLocal=1
         shift
         ;;
+      --skip-self-update) # do nothing just silently ignore
+        shift
+        ;;
       --fetch-all) # fetch all refs not only the specified branch
         fetchAll=1
         shift
@@ -979,16 +982,19 @@ function update()
   local absScriptPath
   absScriptPath=$(readlink -f "${INSTALLER_SELF}")
   if [[ "$INSTALLER_VERSION" < "${nextVersion}" ]]; then
-    printf "${LOG_PREFIX} [updater] Updating \e[31;1m%s\e[0m -> \e[32;1m%s\e[0m\n" "${INSTALLER_VERSION}" "${nextVersion}"
+    printf "${LOG_PREFIX} [updater] Updating %s -> %s\n" "${INSTALLER_VERSION}" "${nextVersion}"
 
     {
       echo "cp \"${temporaryFile}\" \"${absScriptPath}\""
       echo "rm -f \"${temporaryFile}\""
-      echo "echo [updater] Re-running updated script"
-      echo "exec \"${absScriptPath}\" --skipInstallerUpdate $@"
+      echo "echo ${LOG_PREFIX} [updater] Re-running updated script"
+      echo "exec \"${absScriptPath}\" --skip-self-update $@"
     } >> updater.sh
 
-    bash ./updater.sh
+    if ! bash ./updater.sh; then
+      err "[updater] Failed to run update"
+      exit 1
+    fi
   else
     log "[updater] No update available"
     rm -f "${temporaryFile}"
@@ -1011,7 +1017,7 @@ function process_updater_arguments()
   params=
   while (( "$#" )); do
     case "$1" in
-      --use-local) # inhibit update before/after
+      --skip-self-update) # inhibit update before/after
         INSTALLER_UPDATED=1
         shift
         ;;
