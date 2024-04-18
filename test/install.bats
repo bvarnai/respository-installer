@@ -55,8 +55,8 @@ setup() {
 
     assert_output --partial "[installer] Sorting projects based on configuration index"
     # project5 doLast should run after project4
-    assert_line --index 44 'project4 running doLast'
-    assert_line --index 64 'project5 running doLast'
+    assert_line --index 43 'project4 running doLast'
+    assert_line --index 63 'project5 running doLast'
     [ "$status" -eq 0 ]
 }
 

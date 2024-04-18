@@ -41,4 +41,7 @@ _common_setup() {
     export TEST_BASENAME
 
     export TEST_SERVER_URL="http://localhost:8787"
+
+    git config --global user.email "you@example.com"
+    git config --global user.name "Your Name"
 }
