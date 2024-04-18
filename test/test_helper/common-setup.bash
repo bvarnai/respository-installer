@@ -18,9 +18,11 @@ _common_setup() {
     # redirect on GitHub
     if [[ -n "$GITHUB_WORKSPACE" ]]; then
         export TEST_FILE_TMPDIR="$GITHUB_WORKSPACE/../tmp"
+        if [[ -d "$TEST_FILE_TMPDIR" ]]; then
+            # delete any previous artifacts
+            rm -rf "${TEST_FILE_TMPDIR}"
+        fi
         mkdir -p "$TEST_FILE_TMPDIR"
-        # delete any previous artifacts
-        rm -r "${TEST_FILE_TMPDIR:?}/"*
     fi
 
     export TEST_FILE_TMPDIR
