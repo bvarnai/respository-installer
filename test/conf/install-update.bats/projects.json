@@ -1,116 +1,33 @@
 {
-  "bootstrap": "project3",
+  "bootstrap": "project1",
   "projects": [
     {
       "name": "project1",
       "category": "generic",
-      "default": "false",
+      "default": "true",
       "urls": {
-        "fetch": "http://localhost:8787/install.bats/project1.git"
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
       },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
-      "branch": "apple",
+      "branch": "master",
       "update": "true"
     },
     {
       "name": "project2",
-      "category": "generic",
       "default": "false",
       "urls": {
-        "fetch": "http://localhost:8787/install.bats/project1.git"
+        "fetch": "http://localhost:8787/install-update.bats/project2.git"
       },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
       "branch": "master",
-      "update": "true"
+      "update": "false"
     },
     {
       "name": "project3",
-      "category": "generic",
-      "default": "true",
-      "urls": {
-        "fetch": "http://localhost:8787/install.bats/project1.git"
-      },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
-      "branch": "master",
-      "update": "true"
-    },
-    {
-      "name": "project4",
-      "category": "generic",
-      "default": "true",
-      "urls": {
-        "fetch": "http://localhost:8787/install.bats/project2.git"
-      },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
-      "branch": "master",
-      "update": "true",
-      "doLast": [
-        "bash doLast.sh"
-      ]
-    },
-    {
-      "name": "project5",
-      "category": "generic",
-      "default": "true",
-      "urls": {
-        "fetch": "http://localhost:8787/install.bats/project3.git"
-      },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
-      "branch": "master",
-      "update": "true",
-      "doLast": [
-        "bash doLast.sh"
-      ]
-    },
-    {
-      "name": "project6",
-      "category": "generic",
       "default": "false",
       "urls": {
-        "fetch": "http://localhost:8787/install.bats/project3.git"
+        "fetch": "http://localhost:8787/install-update.bats/project1.git"
       },
-      "options": {
-        "clone": "--depth 1"
-      },
-      "configuration": [
-        "core.autocrlf false",
-        "core.safecrlf false"
-      ],
       "branch": "master",
-      "update": "true",
-      "doLast": [
-        "bash doLastWithError.sh"
-      ]
+      "update": "false"
     }
   ]
 }

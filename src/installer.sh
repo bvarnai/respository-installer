@@ -318,21 +318,23 @@ function gitConfig()
     path="${project}"
   fi
 
-  log "Setting git config(s)"
   local gitConfigs
   gitConfigs=$(echo "${configuration}" | "${JQ}" -r ".configuration[]?")
-  pushd "${path}" > /dev/null || exit
-  while IFS= read -r gitConfig; do
-    # split string by whitespace to key-value pairs
-    # shellcheck disable=SC2206
-    local keyValue=($gitConfig)
-    if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
-      err "Unable to set local git configuration"
-      popd > /dev/null || exit
-      exit 1
-    fi
-  done <<< "${gitConfigs}"
-  popd > /dev/null || exit
+  if [[ -n "$gitConfigs" ]]; then
+    log "Setting git config(s)"
+    pushd "${path}" > /dev/null || exit
+    while IFS= read -r gitConfig; do
+      # split string by whitespace to key-value pairs
+      # shellcheck disable=SC2206
+      local keyValue=($gitConfig)
+      if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
+        err "Unable to set local git configuration"
+        popd > /dev/null || exit
+        exit 1
+      fi
+    done <<< "${gitConfigs}"
+    popd > /dev/null || exit
+  fi
 }
 
 #######################################
@@ -355,19 +357,21 @@ function doLast()
       path="${project}"
     fi
 
-    log "Running doLast command(s)"
     local commands
     commands=$(echo "${configuration}" | "${JQ}" -r ".doLast[]?")
-    pushd "${path}" > /dev/null || exit
-    while IFS= read -r command; do
-      local trimmedCommand=$(echo "${command}" | xargs)
-      if ! $trimmedCommand; then
-        err "Failed to execute doLast command"
-        popd > /dev/null || exit
-        exit 1
-      fi
-    done <<< "${commands}"
-    popd > /dev/null || exit
+    if [[ -n "$commands" ]]; then
+      log "Running doLast command(s)"
+      pushd "${path}" > /dev/null || exit
+      while IFS= read -r command; do
+        local trimmedCommand=$(echo "${command}" | xargs)
+        if ! $trimmedCommand; then
+          err "Failed to execute doLast command"
+          popd > /dev/null || exit
+          exit 1
+        fi
+      done <<< "${commands}"
+      popd > /dev/null || exit
+    fi
   else
     log "Skipping installation/modification of globals in CI mode"
   fi
@@ -916,7 +920,14 @@ function list_projects()
       currentProjectPath="${currentProjectConfigurationArray[3]}"
     fi
 
-    printf "%-20s (category: %-11s, default: %-5s, path: %s)\n" "${currentProjectConfigurationArray[0]}" "${currentProjectConfigurationArray[1]}" "${currentProjectConfigurationArray[2]}" "${currentProjectPath}"
+    local currentProjectCategory
+    if [[ -z "${currentProjectConfigurationArray[1]}" ]]; then
+      currentProjectCategory="unset"
+    else
+      currentProjectCategory="${currentProjectConfigurationArray[1]}"
+    fi
+
+    printf "%-20s (category: %-11s, default: %-5s, path: %s)\n" "${currentProjectConfigurationArray[0]}" "${currentProjectCategory}" "${currentProjectConfigurationArray[2]}" "${currentProjectPath}"
   done
 }
 

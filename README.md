@@ -145,18 +145,18 @@ The configuration file is called `projects.json` and it's downloaded using the `
 | bootstrap      |                          |       | Bootstrap project is always added. For example it can be used for user-defined `doLast` scripts used during installation. Referenced by `name` in `projects`          |
 | projects       |                          |       | Array of projects |
 |                | name                     |       | Project name |
-|                | path                     |       | Project path. Relative to workspace root. If not specified `name` will be used as path *[Optional]* |
-|                | category                 |       | Project category. Informal tagging of projects. Displayed during project listing |
+|                | path                     |       | Project path. Relative to workspace root. If not specified `name` will be used as path *[optional]* |
+|                | category                 |       | Project category. Informal tagging of projects. Displayed during project listing *[optional]* |
 |                | default                  |       | Whether to install the project if no project set is specified |
 |                | urls                     |       | *Git* repository URLs |
 |                |                          | fetch | URL used for `fetch` |
-|                |                          | push  | URL used for `push`. If not specified `fetch` URL will be used *[Optional]* |
+|                |                          | push  | URL used for `push`. If not specified `fetch` URL will be used *[optional]* |
 |                | options                  |       | *Git* command options |
-|                |                          | clone | Options for `clone` command. For example `--depth 1`" would result in a shallow clone *[Optional]* |
-|                | configuration            |       | Array of *Git* configuration `config` options, repository scope. Add `--global` for global scope *[Optional]* |
+|                |                          | clone | Options for `clone` command. For example `--depth 1`" would result in a shallow clone *[optional]* |
+|                | configuration            |       | Array of *Git* configuration `config` options, repository scope. Add `--global` for global scope *[optional]* |
 |                | branch                   |       | Default branch |
 |                | update                   |       | Whether to force update the repository. This should be set to `true` for *tooling* related projects |
-|                | doLast                   |       | Array of shell commands to execute after repository update *[Optional]* |
+|                | doLast                   |       | Array of shell commands to execute after repository update *[optional]* |
 
 
 :memo: Additional notes

@@ -60,6 +60,17 @@
       ],
       "branch": "master",
       "update": "true"
+    },
+    {
+      "name": "project4",
+      "path": "sub/project4",
+      "default": "false",
+      "urls": {
+        "fetch": "https://xyz/project4.git",
+        "push": "ssh://xyz/project4.git"
+      },
+      "branch": "master",
+      "update": "true"
     }
   ]
 }

@@ -13,63 +13,50 @@ setup() {
     export INSTALLER_SCM_PLATFORM='static'
 }
 
-@test "install project (including bootstrap)" {
-    run installer.sh --yes install project2
+@test "update to latest if update is allowed" {
+    # install project as-is
+    run installer.sh --yes install project1
+    assert_output --partial "a279539 Initial commit"
 
-    assert_output --partial '[installer] Now at commit'
-    # check if bootstrap is added
-    assert_output --partial "[installer] Adding bootstrap project 'project3' implicitly"
-    [ "$status" -eq 0 ]
-}
+    # add new changes
+    pushd project1
+    touch change.txt
+    git add .
+    git commit -m "Add change"
+    popd
 
-@test "install default project" {
-    run installer.sh --yes install
-
-    assert_output --partial '[installer] Now at commit'
-    [ "$status" -eq 0 ]
-}
-
-@test "install project, but unable to clone due to missing branch on origin" {
+    # install again
     run installer.sh --yes install project1
 
-    assert_output --partial "[installer] ! Unable to clone repository"
-    [ "$status" -eq 1 ]
-}
-
-@test "install project with doLast" {
-    run installer.sh --yes install project4
-
-    assert_output --partial "project4 running doLast"
+    assert_output --partial "[installer] Resetting to latest revision before updating"
+    assert_output --partial "a279539 Initial commit"
     [ "$status" -eq 0 ]
 }
 
-@test "install project with doLast error" {
-    run installer.sh --yes install project6
+@test "do not update to latest if update is not allowed" {
+    # install project as-is
+    installer.sh --yes install project3
 
-    assert_output --partial 'project6 running doLast'
-    [ "$status" -eq 1 ]
-}
+    # add new changes
+    pushd project3
+    touch change.txt
+    git add .
+    git commit -m "Add change"
+    popd
 
-@test "install projects with sorting" {
-    run installer.sh --yes install project5 project4
+    # install again
+    run installer.sh --yes install project3
 
-    assert_output --partial "[installer] Sorting projects based on configuration index"
-    # project5 doLast should run after project4
-    assert_line --index 44 'project4 running doLast'
-    assert_line --index 64 'project5 running doLast'
+    assert_output --partial "[installer] Skipping reset"
+    assert_output --partial "Add change"
     [ "$status" -eq 0 ]
+
 }
 
-@test "install existing project" {
-    # this test has dependency on previous test case
-    run installer.sh --yes install project2
-
-    assert_output --partial "[installer] Existing repository found, updating"
-    assert_output --partial '[installer] Now at commit'
-    # check if bootstrap is added
-    assert_output --partial "[installer] Adding bootstrap project 'project3' implicitly"
-    [ "$status" -eq 0 ]
+@test "update to latest if update is allowed from different branch" {
+    :
 }
+
 
 teardown_file() {
     kill "$(< "$TEST_FILE_TMPDIR/.test-server.pid")"
