@@ -40,14 +40,16 @@ function help()
   echo "  help                  print help - this -"; \
   echo "Options:"; \
   echo "      --use-local-config          use a local copy of the configuration"; \
-  echo "      --no-self-update            no not update the script itself"; \
+  echo "      --skip-self-update          do not update the script itself"; \
   echo "  -y, --yes                       say 'yes' to user questions"; \
   echo "      --link <target>             linked mode"; \
-  echo "      --branch <branch>           project branch, if it exits on remote (falls back to branch in configuration)"; \
+  echo "      --branch <branch>           project branch, if it exits on remote (defaults to 'branch' in configuration)"; \
   echo "      --stream <branch>           development stream (defaults to master)"; \
-  echo "      --clone-options <branch>    clone options (falls back to cloneOptions in configuration)"; \
+  echo "      --clone-options <branch>    clone options (defaults to 'cloneOptions' in configuration)"; \
   echo "      --fetch-all                 fetch all remotes"; \
-  echo "      --git-quiet                 run git commands with --quite"; \
+  echo "      --prune                     prune during fetch"; \
+  echo "      --git-quiet                 run git commands with '--quite' option"; \
+  echo "      --skip-dolast               do not run doLast commands"; \
   echo ""; \
   echo "More information at <TBD>" 1>&2; exit 0;
 }
@@ -66,10 +68,14 @@ function link()
 # Installs a project.
 # Arguments:
 #   $1 - the project configuration
-#   $3 - the project branch set/unset
-#   $4 - the project branch
-#   $5 - the clone options set/unset
-#   $6 - the clone options
+#   $2 - the project branch set/unset
+#   $3 - the project branch
+#   $4 - the clone options set/unset
+#   $5 - the clone options
+#   $6 - fetch --all option
+#   $7 - git --quite option
+#   $8 - git --prune option
+#   $9 - skip doLast
 # Returns:
 #   None
 #######################################
@@ -82,6 +88,9 @@ function install_project()
   local cloneOptions="$5"
   local fetchAll="$6"
   local gitQuiet="$7"
+  local gitPrune="$8"
+  local skipDoLast="$9"
+
   local project
   project=$(echo "${configuration}" | "${JQ}" -r '.name')
   log "Installing project '${project}'"
@@ -123,7 +132,7 @@ function install_project()
   fi
 
   local quite
-  if [[ $gitQuiet == 1 ]]; then
+  if [[ "${gitQuiet}" == 1 ]]; then
     quite="--quiet"
   else
     quite=""
@@ -166,7 +175,7 @@ function install_project()
       log "Existing repository found, updating"
       pushd "${path}" > /dev/null || exit
       # set remote url
-      if ! git remote set-url origin "${fetchURL}"; then
+      if ! git remote set-url origin "${fetchURL}" > /dev/null; then
         err "Unable to set remote URL"
         exit 1
       fi
@@ -186,8 +195,8 @@ function install_project()
       configRefs=$(git config  --local --get-all remote.origin.fetch)
       refsArray=($configRefs)
       if [[ "${refsArray[*]}" =~ "*" ]]; then
-        git config --unset-all "remote.origin.fetch"
-        git config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+        git config --unset-all "remote.origin.fetch" > /dev/null
+        git config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" > /dev/null
       else
         if ! git config --get-regex remote.origin.fetch "refs/heads/${branch}" > /dev/null 2>&1; then
           if ! git config --add remote.origin.fetch "+refs/heads/${branch}:refs/remotes/origin/${branch}" > /dev/null 2>&1; then
@@ -197,28 +206,27 @@ function install_project()
         fi
       fi
 
-      # prune explicitly on CI
       local prune
-      if [[ -z "${VSB_CI}" ]]; then
-        prune=""
-      else
+      if [[ "${gitPrune}" == 1 ]]; then
         prune="--prune"
+      else
+        prune=""
       fi
 
       log "Branch '${branch}' is selected"
       if [[ "${fetchAll}" == 1 ]]; then
-        if ! git fetch --all "${prune}" $quite; then
+        if ! git fetch --all $prune $quite; then
           err "Unable to fetch remote"
           exit 1
         fi
       else
-        if ! git fetch origin "${branch}" "${prune}" $quite; then
+        if ! git fetch origin "${branch}" $prune $quite; then
           err "Unable to fetch remote"
           exit 1
         fi
       fi
 
-      if ! git checkout "${branch}"; then
+      if ! git checkout "${branch}" $quite; then
         err "Unable to checkout branch"
         exit 1
       fi
@@ -298,7 +306,7 @@ function install_project()
   fi
 
   gitConfig "${configuration}"
-  doLast "${configuration}"
+  doLast "${configuration}" "${skipDoLast}"
 }
 
 #######################################
@@ -311,6 +319,7 @@ function install_project()
 function gitConfig()
 {
   local configuration="$1"
+
   local project
   project=$(echo "${configuration}" | "${JQ}" -r '.name')
 
@@ -330,7 +339,7 @@ function gitConfig()
       local keyValue
       # shellcheck disable=SC2206
       keyValue=($gitConfig)
-      if ! git config --local "${keyValue[0]}" "${keyValue[1]}"; then
+      if ! git config --local "${keyValue[0]}" "${keyValue[1]}" > /dev/null; then
         err "Unable to set local git configuration"
         popd > /dev/null || exit
         exit 1
@@ -349,8 +358,12 @@ function gitConfig()
 #######################################
 function doLast()
 {
-  if [[ -z "${VSB_CI}" ]]; then
-    local configuration="$1"
+  local configuration="$1"
+  local skipDoLast="$2"
+
+  if [[ ${skipDoLast} == 1 ]]; then
+    log "Skipping doLast commands"
+  else
     local project
     project=$(echo "${configuration}" | "${JQ}" -r '.name')
 
@@ -376,8 +389,6 @@ function doLast()
       done <<< "${commands}"
       popd > /dev/null || exit
     fi
-  else
-    log "Skipping installation/modification of globals in CI mode"
   fi
 }
 
@@ -443,6 +454,7 @@ function get_stream_configuration_bitbucket_server()
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
+
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${streamBranch}")
@@ -480,6 +492,7 @@ function get_stream_configuration_static()
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
+
   local lastPathSegment
   lastPathSegment=$(basename $configurationURL)
   log "Getting stream configuration..."
@@ -609,7 +622,7 @@ function check_remote_refs()
   # retrieve all remote refs from local git config file
   configRefs=$(git config  --local --get-all remote.origin.fetch)
   # remove all remote refs from local git config file
-  git config --unset-all "remote.origin.fetch"
+  git config --unset-all "remote.origin.fetch" > /dev/null
   # shellcheck disable=SC2206
   refsArray=($configRefs)
   for ref in "${refsArray[@]}"; do
@@ -648,6 +661,8 @@ function main()
   local useLocalConfiguration
   local fetchAll
   local gitQuiet
+  local gitPrune
+  local skipDoLast
   yes=0
   list=0
   update=0
@@ -661,6 +676,8 @@ function main()
   useLocalConfiguration=0
   fetchAll=0
   gitQuiet=0
+  gitPrune=0
+  skipDoLast=0
   params=
   while (( "$#" )); do
     case "$1" in
@@ -702,23 +719,31 @@ function main()
         cloneOptions="$1"
         shift
         ;;
-      --use-local-config) # use local copy of configuration and dependencies
+      --use-local-config)
         useLocalConfiguration=1
         shift
         ;;
-      --skip-self-update) # do nothing just silently ignore
+      --skip-self-update)
         shift
         ;;
-      --fetch-all) # fetch all refs not only the specified branch
+      --fetch-all)
         fetchAll=1
         shift
         ;;
-      -y|--yes) # no questions will be asked
+      -y|--yes)
         yes=1
         shift
         ;;
-      --git-quiet) # skip ahead
+      --git-quiet)
         gitQuiet=1
+        shift
+        ;;
+      --prune)
+        gitPrune=1
+        shift
+        ;;
+      --skip-dolast)
+        skipDoLast=1
         shift
         ;;
       --) # end argument parsing
@@ -879,7 +904,7 @@ function main()
     # trim name
     projectName=$(echo "${projectName}" | xargs)
     find_project_by_name "${projectName}"
-    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}"
+    install_project "${INSTALLER_LAST_RETURN}" "${projectBranchSet}" "${projectBranch}" "${cloneOptionsSet}" "${cloneOptions}" "${fetchAll}" "${gitQuiet}" "${gitPrune}" "${skipDoLast}"
   done
 }
 
@@ -1046,6 +1071,12 @@ function process_updater_arguments()
         shift
         ;;
       --git-quiet) # skip ahead
+        shift
+        ;;
+      --prune) # skip ahead
+        shift
+        ;;
+      --skip-dolast) # skip ahead
         shift
         ;;
       --) # end argument parsing
