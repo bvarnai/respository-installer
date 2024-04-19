@@ -71,18 +71,24 @@ Since the configuration is also branch specific, we need to know how to get a br
 
 #### GitHub
 
-The URL pattern is the following:
+To access raw content, such as downloading a file, GitHub's URL pattern is the following:
 
 ```
 https://#token#@raw.githubusercontent.com/<user or organization>/<repo name>/#branch#/<path to file>/<file name>
 ```
-**installer** uses the ## markers to assemble the correct URL
+**installer** uses the `##` markers to assemble the correct URL
 
 - `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` environment variable which hold your *Personal access token* or PAT. To create PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
-- `#branch#` is replaced with the currect branch (there no manual setting)
+- `#branch#` is replaced with the currect branch (there is no manual setting)
 
-:bulb: Token is only needed for private repositories! Make sure you set `repo` access when creating the PAT
+:bulb: Token is only needed for private repositories. Make sure you set `repo` scope (and nothing more) when creating the PAT
 ![github-pat](docs/github-pat.png)
+
+For example, using your private repositories would need the following settings:
+```
+export INSTALLER_CONFIG_URL=https://#token#@raw.githubusercontent.com/user/repo/#branch#/projects.json
+export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
+```
 
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
 
