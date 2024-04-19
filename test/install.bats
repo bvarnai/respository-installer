@@ -62,7 +62,7 @@ setup() {
 
 @test "install existing project" {
     # this test has dependency on previous test case
-    run installer.sh --yes install project2
+    run installer.sh --yes --fetch-all install project2
 
     assert_output --partial "[installer] Existing repository found, updating"
     assert_output --partial "[installer] Now at commit"

@@ -61,10 +61,10 @@ First, the following environment variables must be set
 
 ### Supported SCM types
 
-Since the configuration is also branch specific, we need to know how to get a branch from the SCM. This means assembling a URL used by `curl` to get the configuration. The following SCM type are supported:
-  - bitbucket_server - Bitbucket server (any variant)
-  - github - get_stream_configuration_github
-  - static - get_stream_configuration_static
+Since the configuration is also branch specific, we need to know how to get a branch from the SCM. This means assembling a URL used by `curl` to get the configuration. The following SCM types are supported:
+  - github - GitHub *[default]*
+  - bitbucket_server - Bitbucket Enterprise (server/data center)
+  - static - simple http
 
 :warning: This is only used for configuration discovery, you can use any platform for your projects
 
