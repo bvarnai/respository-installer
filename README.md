@@ -27,6 +27,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Demo](#demo)
   - [Installation](#installation)
     - [Supported SCM types](#supported-scm-types)
+      - [GitHub](#github)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
@@ -68,6 +69,21 @@ Since the configuration is also branch specific, we need to know how to get a br
 
 :warning: This is only used for configuration discovery, you can use any platform for your projects
 
+#### GitHub
+
+The URL pattern is the following:
+
+```
+https://#token#@raw.githubusercontent.com/<user or organization>/<repo name>/#branch#/<path to file>/<file name>
+```
+**installer** uses the ## markers to assemble the correct URL
+
+- `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` environment variable which hold your *Personal access token* or PAT. To create PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+- `#branch#` is replaced with the currect branch (there no manual setting)
+
+:bulb: Token is only needed for private repositories! Make sure you set `repo` access when creating the PAT
+![github-pat](docs/github-pat.png)
+
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
 
 Next get the **installer** with `curl` for the first time
@@ -88,6 +104,7 @@ Finally run **installer** in the current working directory.
 Following tools are required and must be installed
   - `git`
   - `curl`
+  - `sed`
   - `bash` >= 4.0.0
 
 :warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself if not available. This step is platform specific
