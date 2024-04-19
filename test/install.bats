@@ -55,8 +55,8 @@ setup() {
 
     assert_output --partial "[installer] Sorting projects based on configuration index"
     # project5 doLast should run after project4
-    assert_line --index 43 "project4 running doLast"
-    assert_line --index 63 "project5 running doLast"
+    assert_line --index 41 "project4 running doLast"
+    assert_line --index 60 "project5 running doLast"
     [ "$status" -eq 0 ]
 }
 
@@ -76,6 +76,13 @@ setup() {
     run installer.sh --yes --git-quiet install project7
 
     refute_output --partial "HEAD is now at"
+    [ "$status" -eq 0 ]
+}
+
+@test "install project with doLast skipped" {
+    run installer.sh --yes --skip-dolast install project8
+
+    assert_output --partial "Skipping doLast commands"
     [ "$status" -eq 0 ]
 }
 

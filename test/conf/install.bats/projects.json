@@ -121,6 +121,19 @@
       },
       "branch": "master",
       "update": "true"
+    },
+    {
+      "name": "project8",
+      "category": "generic",
+      "default": "false",
+      "urls": {
+        "fetch": "http://localhost:8787/install.bats/project3.git"
+      },
+      "branch": "master",
+      "update": "true",
+      "doLast": [
+        "bash doLast.sh"
+      ]
     }
   ]
 }
