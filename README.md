@@ -29,7 +29,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
     - [Supported SCM types](#supported-scm-types)
       - [GitHub](#github)
       - [BitBucket Enterprise](#bitbucket-enterprise)
-    - [Simple HTTP](#simple-http)
+      - [Simple HTTP](#simple-http)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
@@ -108,7 +108,7 @@ export INSTALLER_CONFIG_SCM=bitbucket_server
 
 :warning: Only public repositories supported this time, I had no time to test with private repositories
 
-### Simple HTTP
+#### Simple HTTP
 
 This type is mainly used to testing and it's very similar to GitHub's format.
 
