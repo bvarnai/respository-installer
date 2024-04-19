@@ -106,7 +106,7 @@ export INSTALLER_CONFIG_URL=https://contoso/projects/project/repos/repo/raw/proj
 export INSTALLER_CONFIG_SCM=bitbucket_server
 ```
 
-:warning: Only public repositories supported this time, I had no time to test with private repositories
+:warning: Only public repositories are supported at this time, I had no time to test with private repositories
 
 #### Simple HTTP
 
