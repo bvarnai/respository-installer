@@ -28,7 +28,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Installation](#installation)
     - [Supported SCM types](#supported-scm-types)
       - [GitHub](#github)
-    - [BitBucket Enterprise](#bitbucket-enterprise)
+      - [BitBucket Enterprise](#bitbucket-enterprise)
     - [Simple HTTP](#simple-http)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
@@ -92,7 +92,7 @@ export INSTALLER_CONFIG_URL=https://#token#@raw.githubusercontent.com/user/repo/
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 ```
 
-### BitBucket Enterprise
+#### BitBucket Enterprise
 
 Since Bitbucket uses the URL's query string to specify the branch, there is no need to use markers. The format is the following:
 
