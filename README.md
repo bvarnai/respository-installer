@@ -30,6 +30,7 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
       - [GitHub](#github)
       - [BitBucket Enterprise](#bitbucket-enterprise)
       - [Simple HTTP](#simple-http)
+    - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
@@ -113,6 +114,8 @@ export INSTALLER_CONFIG_SCM=bitbucket_server
 This type is mainly used to testing and it's very similar to GitHub's format.
 
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
+
+### Getting **installer** for the first time
 
 Next get the **installer** with `curl` for the first time
 
