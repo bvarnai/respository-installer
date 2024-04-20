@@ -135,7 +135,7 @@ Branches are simply folders like `main`, `master` etc.
 Next get the **installer** with `curl` for the first time
 
 ```bash
-curl -L $INSTALLER_SELF_URL -o installer.sh && chmod +x installer.sh
+curl -L https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh -o installer.sh && chmod +x installer.sh
 ```
 
 Finally run **installer** in the current working directory.
