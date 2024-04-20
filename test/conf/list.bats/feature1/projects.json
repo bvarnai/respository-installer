@@ -1,9 +1,5 @@
 {
-  "bootstrap":
-  {
-      "project": "project11",
-      "http.sslVerify": "false"
-  },
+  "bootstrap": "project11",
   "projects": [
     {
       "name": "project11",

@@ -484,7 +484,7 @@ function get_stream_configuration_bitbucket_server()
 #   None
 #######################################
 # shellcheck disable=SC2317
-function get_stream_configuration_static()
+function get_stream_configuration_plain()
 {
   local streamBranchSet="$1"
   local streamBranch="$2"

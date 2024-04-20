@@ -10,7 +10,7 @@ setup() {
 
     export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_CONFIG_SCM='static'
+    export INSTALLER_CONFIG_SCM='plain'
 }
 
 @test "update to latest if update is allowed" {
