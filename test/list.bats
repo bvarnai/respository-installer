@@ -16,7 +16,7 @@ setup() {
 @test "list projects from default stream" {
     run installer.sh list
 
-    assert_output --partial "Stream branch 'default' is selected"
+    assert_output --partial "Stream branch 'main' is selected (default)"
     assert_output --partial "Available projects:"
     assert_output --partial "project1"
     assert_output --partial "project2"

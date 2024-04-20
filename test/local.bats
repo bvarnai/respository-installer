@@ -17,7 +17,7 @@ setup() {
     mkdir -p "$TEST_FILE_TMPDIR/$TEST_BASENAME"
 
     # stage reference installer for testing
-    cp "$DIR/conf/$TEST_BASENAME/projects.json" "$TEST_FILE_TMPDIR/projects.json"
+    cp "$DIR/conf/$TEST_BASENAME/main/projects.json" "$TEST_FILE_TMPDIR/projects.json"
 }
 
 @test "use local configuration" {
