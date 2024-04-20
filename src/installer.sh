@@ -44,7 +44,7 @@ function help()
   echo "      --git-quiet                 run git commands with '--quite' option"; \
   echo "      --skip-dolast               do not run doLast commands"; \
   echo ""; \
-  echo "More information at <TBD>" 1>&2; exit 0;
+  echo "More information visit https://github.com/bvarnai/respository-installer" 1>&2; exit 0;
 }
 
 function link()
