@@ -13,10 +13,16 @@ setup() {
     export INSTALLER_CONFIG_SCM='plain'
 }
 
-@test "display help" {
-    run installer.sh help
+@test "update projects in workspace" {
 
-    assert_output --partial "Usage: installer.sh [options] [<command>] [arguments]"
+    installer.sh --yes install
+
+    # install again
+    run installer.sh --yes update
+
+    assert_output --partial "[installer] Searching for existing projects in the current directory (workspace)"
+    assert_output --partial "a279539 Initial commit"
+    [ "$status" -eq 0 ]
 }
 
 teardown_file() {

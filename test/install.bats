@@ -8,9 +8,9 @@ setup() {
     load 'test_helper/bats-support/load'
     load 'test_helper/bats-assert/load'
 
-    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
+    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/#branch#/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_CONFIG_SCM='static'
+    export INSTALLER_CONFIG_SCM='plain'
 }
 
 @test "install project (including bootstrap)" {
@@ -23,7 +23,7 @@ setup() {
 }
 
 @test "install default project" {
-    run installer.sh --yes install
+    run installer.sh --yes --prune install
 
     assert_output --partial "[installer] Now at commit"
     [ "$status" -eq 0 ]
@@ -62,7 +62,7 @@ setup() {
 
 @test "install existing project" {
     # this test has dependency on previous test case
-    run installer.sh --yes install project2
+    run installer.sh --yes --fetch-all install project2
 
     assert_output --partial "[installer] Existing repository found, updating"
     assert_output --partial "[installer] Now at commit"

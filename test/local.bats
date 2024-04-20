@@ -8,16 +8,16 @@ setup() {
     load 'test_helper/bats-support/load'
     load 'test_helper/bats-assert/load'
 
-    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
+    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/#branch#/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_CONFIG_SCM='static'
+    export INSTALLER_CONFIG_SCM='plain'
 
     DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
 
     mkdir -p "$TEST_FILE_TMPDIR/$TEST_BASENAME"
 
     # stage reference installer for testing
-    cp "$DIR/conf/$TEST_BASENAME/projects.json" "$TEST_FILE_TMPDIR/projects.json"
+    cp "$DIR/conf/$TEST_BASENAME/main/projects.json" "$TEST_FILE_TMPDIR/projects.json"
 }
 
 @test "use local configuration" {

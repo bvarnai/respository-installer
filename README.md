@@ -27,6 +27,10 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
   - [Demo](#demo)
   - [Installation](#installation)
     - [Supported SCM types](#supported-scm-types)
+      - [GitHub](#github)
+      - [BitBucket Enterprise](#bitbucket-enterprise)
+      - [Plain HTTP](#plain-http)
+    - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
@@ -61,14 +65,73 @@ First, the following environment variables must be set
 
 ### Supported SCM types
 
-Since the configuration is also branch specific, we need to know how to get a branch from the SCM. This means assembling a URL used by `curl` to get the configuration. The following SCM type are supported:
-  - bitbucket_server - Bitbucket server (any variant)
-  - github - get_stream_configuration_github
-  - static - get_stream_configuration_static
+We need to know how to get the configuration file form the SCM without actually cloning it. This means assembling a URL used by `curl` to get the configuration. The following SCM types are supported:
+  - github - GitHub *[default]*
+  - bitbucket_server - Bitbucket Enterprise (server/data center)
+  - plain - Plain HTTP
 
-:warning: This is only used for configuration discovery, you can use any platform for your projects
+:warning: This is only used for configuration file discovery, you can use any `git` platform later for your projects. Authentication for `git` commands are based on your git configuration.
+
+#### GitHub
+
+To get the configuration file the following URL format is used:
+
+```
+https://#token#@raw.githubusercontent.com/<user or organization>/<repo name>/#branch#/<path to file>/<file name>
+```
+The following variables are used in the URL:
+
+- `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` env. variable which holds your *Personal access token* or PAT. To create PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+- `#branch#` is replaced with the currect branch (this done automatically)
+
+:bulb: Token is only needed for private repositories. Make sure you set `repo` scope (and nothing more) when creating the PAT
+![github-pat](docs/github-pat.png)
+
+For example, using your private repositories would need the following settings:
+```
+export INSTALLER_CONFIG_URL=https://#token#@raw.githubusercontent.com/user/repo/#branch#/projects.json
+export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
+```
+
+#### BitBucket Enterprise
+
+Since Bitbucket uses the URL's query string to specify the branch, there is no need to use markers. The format is the following:
+
+```
+https://<server url>/projects/<project name>/repos/<repo name>/raw/<path to file>/<file name>?<branch>
+```
+
+You can copy&paste the URL from BitBucket's web UI, for example
+```
+export INSTALLER_CONFIG_URL=https://contoso/projects/project/repos/repo/raw/projects.json
+export INSTALLER_CONFIG_SCM=bitbucket_server
+```
+
+:warning: Only public repositories are supported at this time, I had no time to test with private repositories
+
+#### Plain HTTP
+
+This type is mainly used to testing and it's very similar to GitHub's format, only that `token` or any other authentication is not supported.
+
+To get the configuration file the following URL format is used:
+
+```
+https://<server url>/<server path>/#branch#/<path to file>/<file name>
+```
+The following variables are used in the URL:
+
+- `#branch#` is replaced with the currect branch (this done automatically)
+
+For example, using your `localhost` server for configuration:
+```
+export INSTALLER_CONFIG_URL=https://localhost:8080/folder/#branch#/projects.json
+```
+
+Branches are simply folders like `main`, `master` etc.
 
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
+
+### Getting **installer** for the first time
 
 Next get the **installer** with `curl` for the first time
 
@@ -88,6 +151,8 @@ Finally run **installer** in the current working directory.
 Following tools are required and must be installed
   - `git`
   - `curl`
+  - `sed`
+  - `uname`
   - `bash` >= 4.0.0
 
 :warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself if not available. This step is platform specific
@@ -102,7 +167,7 @@ Supported platforms
 
 ### Workspace explained
 
-Workspace is the directory where your repositories/projects are installed. **installer** runs from the workspace root and projects in the configuration
+Workspace is the directory where your repositories/projects are cloned. **installer** runs from this workspace's root and projects in the configuration
 are specified *relative* to this directory.
 
 Example layout with `installer.sh` present
@@ -115,11 +180,11 @@ workspace-root
   installer.sh
 ```
 
-:memo: `.installer` directory is a "temp" directory used to store the configuration and other dependencies such as `jq`
+:memo: `.installer` directory is a "temp" directory used to store the configuration and other dependencies such as `jq` if any
 
 ### Configuration file
 
-The configuration file is called `projects.json` and it's downloaded using the `INSTALLER_CONFIG_URL` environment variable. It contains information about all your projects, including setup instructions.
+The configuration file is called `projects.json` and it's downloaded using the `INSTALLER_CONFIG_URL` environment variable. It contains information about all your `git` projects, including setup instructions.
 
 ```json
 {

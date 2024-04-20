@@ -8,16 +8,15 @@ setup() {
     load 'test_helper/bats-support/load'
     load 'test_helper/bats-assert/load'
 
-    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/projects.json"
+    export INSTALLER_CONFIG_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/#branch#/projects.json"
     export INSTALLER_SELF_URL="${TEST_SERVER_URL}/${TEST_BASENAME}/installer.sh"
-    export INSTALLER_CONFIG_SCM='static'
+    export INSTALLER_CONFIG_SCM='plain'
 }
-
 
 @test "list projects from default stream" {
     run installer.sh list
 
-    assert_output --partial "Stream branch 'default' is selected"
+    assert_output --partial "Stream branch 'main' is selected (default)"
     assert_output --partial "Available projects:"
     assert_output --partial "project1"
     assert_output --partial "project2"

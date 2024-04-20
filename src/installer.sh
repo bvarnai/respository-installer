@@ -5,19 +5,12 @@
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
 INSTALLER_VERSION="2.7.5"
-# by default this points to latest release
+
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
-declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/projects.json'}
-
-# To get the branch specific configuration, we need to know the SCM plaform
-# Supported platforms:
-# bitbucket_server - Bitbucket on-prem server (any variant)
-# github - get_stream_configuration_github
-# static - get_stream_configuration_static
-#   This can be used with web servers with static files where the branch is handled as an URI path component.
-#   In this case the last path segment will be treated as the configuration file name
+declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
+declare -r INSTALLER_CONFIG_TOKEN=${INSTALLER_CONFIG_TOKEN:-''}
+declare -r INSTALLER_DEFAULT_BRANCH=${INSTALLER_DEFAULT_BRANCH:-'main'}
 declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'bitbucket_server'}
-
 declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
 
 #######################################
@@ -51,7 +44,7 @@ function help()
   echo "      --git-quiet                 run git commands with '--quite' option"; \
   echo "      --skip-dolast               do not run doLast commands"; \
   echo ""; \
-  echo "More information at <TBD>" 1>&2; exit 0;
+  echo "More information visit https://github.com/bvarnai/respository-installer" 1>&2; exit 0;
 }
 
 function link()
@@ -441,7 +434,8 @@ function urlencode() {
 }
 
 #######################################
-# Downloads the stream configuration from Bitbucket SCM.
+# Downloads the stream configuration from
+# Bitbucket Enterprise SCM.
 # credits https://gist.github.com/cdown/1163649
 # Arguments:
 #   None
@@ -454,6 +448,7 @@ function get_stream_configuration_bitbucket_server()
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
+  local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
 
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
@@ -470,16 +465,18 @@ function get_stream_configuration_bitbucket_server()
       log "Stream branch '${streamBranch}' is selected"
       return
     fi
+  else
+    { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
+    if ! curl -s -k -L -# "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
+      err "Failed to download stream configuration"
+      exit 1
+    fi
+    log "Stream branch '${defaultBranch}' is selected (default)"
   fi
-  if ! curl -s -k -L -# "${configurationURL}" -o "projects.json"; then
-    err "Failed to download stream configuration"
-    exit 1
-  fi
-  log "Stream branch 'default' is selected"
 }
 
 #######################################
-# Downloads the stream configuration from web server for static files.
+# Downloads the stream configuration from web server with static content.
 # credits https://gist.github.com/cdown/1163649
 # Arguments:
 #   None
@@ -487,38 +484,61 @@ function get_stream_configuration_bitbucket_server()
 #   None
 #######################################
 # shellcheck disable=SC2317
-function get_stream_configuration_static()
+function get_stream_configuration_plain()
+{
+  get_stream_configuration_github "$1" "$2"
+}
+
+#######################################
+# Downloads the stream configuration from
+# GitHub SCM.
+# credits https://gist.github.com/cdown/1163649
+# Arguments:
+#   None
+# Returns:
+#   None
+#######################################
+# shellcheck disable=SC2317
+function get_stream_configuration_github()
 {
   local streamBranchSet="$1"
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
+  local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
+  local token="${INSTALLER_CONFIG_TOKEN}"
 
-  local lastPathSegment
-  lastPathSegment=$(basename $configurationURL)
   log "Getting stream configuration..."
+
+  # shellcheck disable=SC2001
+  configurationURL=$(echo "$configurationURL" | sed "s/#token#/$token/")
   if [[ "${streamBranchSet}" == 1 ]]; then
     { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
-    configurationURL=$(echo $configurationURL | sed s/$lastPathSegment//g)
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}${streamRefSpec}/${lastPathSegment}" -o "projects.json")
+    # shellcheck disable=SC2001
+    configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$streamRefSpec/")
+    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}" -o "projects.json")
     if [[ ${httpCode} -ne 200 ]] ; then
-      err "Stream branch doesn't exists"
+      err "Stream branch '${streamRefSpec}' doesn't exists"
       exit 1
     else
       # success
       log "Stream branch '${streamBranch}' is selected"
       return
     fi
+  else
+    local httpCode
+    # shellcheck disable=SC2001
+    configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$defaultBranch/")
+    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}" -o "projects.json")
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "Failed to get stream configuration on branch '${defaultBranch}' (default)"
+      exit 1
+    fi
+    log "Stream branch '${defaultBranch}' is selected (default)"
   fi
-  if ! curl -s -k -L -# "${configurationURL}" -o "projects.json"; then
-    err "Failed to download stream configuration"
-    exit 1
-  fi
-  log "Stream branch 'default' is selected"
 }
-
 
 #######################################
 # Checks if we are inside another Git repository which can cause all kinds of
@@ -768,7 +788,6 @@ function main()
 
   set_jq
 
-  # update if needed
   if [[ "${useLocalConfiguration}" == "0" ]]; then
 
     # get/update stream configuration
