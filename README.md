@@ -9,10 +9,10 @@
 I worked in a Java development team, we had about 15 repositories. I needed a simple tool which is
 
 - Self-contained, no-deps
-- *Git* only (minimal platform specific code)
 - Configuration based
-- Upgradeable
+- Updateable
 - Supports development `streams` (for example parallel tooling for java17, java21 etc.)
+- *Git* only (minimal platform specific code)
 
 and **nothing** more.
 
