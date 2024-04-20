@@ -10,7 +10,7 @@ declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubuserconte
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
 declare -r INSTALLER_CONFIG_TOKEN=${INSTALLER_CONFIG_TOKEN:-''}
 declare -r INSTALLER_DEFAULT_BRANCH=${INSTALLER_DEFAULT_BRANCH:-'main'}
-declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'bitbucket_server'}
+declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'github'}
 declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
 
 #######################################
