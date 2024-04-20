@@ -194,8 +194,8 @@ The configuration file is called `projects.json` and it's downloaded using the `
       "category": "development",
       "default": "true",
       "urls": {
-        "fetch": "https://github.com/johndoe/myproject.git",
-        "push": "git@github.com:johndoe/myproject.git"
+        "fetch": "https://github.com/octocat/Hello-World.git",
+        "push": "git@github.com:octocat/Hello-World.git"
       },
       "options": {
         "clone": "--depth 1"
@@ -280,8 +280,7 @@ pipeline {
     environment {
 
         // installer configuration
-        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'
-        INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/johndoe/myproject/main/cfg/projects.json'
+        INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'
 
         // use a directory outside of job's workspace
         SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace"
