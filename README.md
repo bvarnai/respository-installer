@@ -4,8 +4,6 @@
 
 **installer** is a tool to help users to work with multiple *Git* repositories from the initial clone to getting updates.
 
-:bulb: I use the word *project* interchangeably with *repository*
-
 **Where does it fit?**
 
 I worked in a Java development team, we had about 15 repositories. I needed a simple tool which is
@@ -19,6 +17,8 @@ I worked in a Java development team, we had about 15 repositories. I needed a si
 and **nothing** more.
 
 I looked at existing tools such as Google's [repo](https://github.com/GerritCodeReview/git-repo), but they are much more complicated and usually mixing development workflow tasks which I wanted to keep separately.
+
+:bulb: I use the word *project* interchangeably with *repository*
 
 ## Table of contents
 
@@ -192,7 +192,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
   "projects": [
     {
       "name": "myproject",
-      "category": "generic",
+      "category": "development",
       "default": "true",
       "urls": {
         "fetch": "https://github.com/johndoe/myproject.git",
@@ -316,11 +316,19 @@ This will create symlinks `myproject1` and `myproject2` in the job's workspace, 
 SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace/${EXECUTOR_NUMBER}"
 ```
 
-![Shared executor layout](docs/shared-executor.png)
-
 ##### Stream explained
 
-da,djaldka
+For example the team is working on a teoretical Java update, migrate from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `master` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `master` or `java17`.
+
+If a developer works on `java17` branch, simply switches tooling to that stream
+```
+./installer.sh --stream java17 update
+```
+
+Other developer who remains on `master` just continues as
+```
+./installer.sh --stream master update
+```
 
 ---
 #### help
