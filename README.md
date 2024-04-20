@@ -36,11 +36,11 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
     - [Workspace explained](#workspace-explained)
     - [Configuration file](#configuration-file)
   - [Usage](#usage)
-    - [Command reference](#command-reference)
-      - [Options](#options)
+    - [Options](#options)
       - [Options for development/testing](#options-for-developmenttesting)
-        - [Link mode](#link-mode)
-        - [Stream explained](#stream-explained)
+    - [Link mode](#link-mode)
+    - [Stream explained](#stream-explained)
+    - [Command reference](#command-reference)
       - [help](#help)
       - [list](#list)
       - [install](#install)
@@ -245,8 +245,6 @@ The configuration file is called `projects.json` and it's downloaded using the `
 
 ## Usage
 
-### Command reference
-
 Command syntax is the following:
 
 ```bash
@@ -255,20 +253,23 @@ Command syntax is the following:
 
 Optional elements are shown in brackets []. For example, command may take a list of projects as an argument.
 
-#### Options
+### Options
 
 - `-y, --yes` - skip user prompts
 - `--link` - use symlinks to target directory
 - `--branch` - overrides `branch` setting in configuration
 - `--stream` - specifies the `stream` of the configuration
+- `--fetch-all` - fetches all remotes, branches
+- `--prune` - prune during fetch
 - `--git-quiet` - pass quite to git commands (not everything is suppressed)
+- `--skip-dolast` - do not run doLast commends (useful in CI environments where some setup is not wanted)
 
 #### Options for development/testing
 
 - `--skip-self-update` - skip the script update step
 - `--use-local-config` - use a local configuration file
 
-##### Link mode
+### Link mode
 
 In some cases, you don't want to have a fresh clone of a project to save some time. For example *Jenkins* multibanch pipeline would create a new workspace and make a fresh clone in using **installer**. This is where `link` mode can help.
 
@@ -316,7 +317,7 @@ This will create symlinks `myproject1` and `myproject2` in the job's workspace, 
 SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace/${EXECUTOR_NUMBER}"
 ```
 
-##### Stream explained
+### Stream explained
 
 For example the team is working on a teoretical Java update, migrate from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `master` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `master` or `java17`.
 
@@ -329,6 +330,8 @@ Other developer who remains on `master` just continues as
 ```
 ./installer.sh --stream master update
 ```
+
+### Command reference
 
 ---
 #### help
@@ -355,7 +358,7 @@ Lists available projects.
 ./installer.sh install [project...]
 ```
 
-Installs a project. This is the default command, if nothing else is specified.
+Installs a project(s). This is the default command, if nothing else is specified.
 
 Arguments:
 
@@ -370,11 +373,13 @@ Arguments:
 ./installer.sh update
 ```
 
-Updates existing projects in your workspace.
+Updates existing projects in the current directory.
 
 ---
 
 ## FAQ
+
+To be added
 
 ## Development notes
 
