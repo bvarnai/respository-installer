@@ -486,34 +486,7 @@ function get_stream_configuration_bitbucket_server()
 # shellcheck disable=SC2317
 function get_stream_configuration_plain()
 {
-  local streamBranchSet="$1"
-  local streamBranch="$2"
-  local configurationURL="${INSTALLER_CONFIG_URL}"
-
-  local lastPathSegment
-  lastPathSegment=$(basename $configurationURL)
-  log "Getting stream configuration..."
-  if [[ "${streamBranchSet}" == 1 ]]; then
-    { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
-    configurationURL=$(echo $configurationURL | sed s/$lastPathSegment//g)
-    # it's not possible to check remote branch here
-    # as no git reposiory available yet, just try to fetch the file
-    local httpCode
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}${streamRefSpec}/${lastPathSegment}" -o "projects.json")
-    if [[ ${httpCode} -ne 200 ]] ; then
-      err "Stream branch doesn't exists"
-      exit 1
-    else
-      # success
-      log "Stream branch '${streamBranch}' is selected"
-      return
-    fi
-  fi
-  if ! curl -s -k -L -# "${configurationURL}" -o "projects.json"; then
-    err "Failed to download stream configuration"
-    exit 1
-  fi
-  log "Stream branch 'default' is selected"
+  get_stream_configuration_github "$1" "$2"
 }
 
 #######################################

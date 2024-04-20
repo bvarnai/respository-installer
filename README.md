@@ -127,6 +127,8 @@ For example, using your `localhost` server for configuration:
 export INSTALLER_CONFIG_URL=https://localhost:8080/folder/#branch#/projects.json
 ```
 
+Branches are simply folders like `main`, `master` etc.
+
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
 
 ### Getting **installer** for the first time
