@@ -57,10 +57,16 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
 
 ## Installation
 
-First, the following environment variables must be set
+![Overview](docs/overview.png)
+
+The following environment variables are needed:
 
 - `INSTALLER_CONFIG_URL` - URL of the configuration `projects.json`
 - `INSTALLER_CONFIG_SCM` - type of SCM (GitHub etc.) used for the configuration
+
+If you are using GitHub, only `INSTALLER_CONFIG_URL` is needed.
+
+:memo: The best way to work in a team to fork **installer** and set defaults according to the platfrom used
 
 ### Supported SCM types
 
@@ -100,13 +106,18 @@ Since Bitbucket uses the URL's query string to specify the branch, there is no n
 https://<server url>/projects/<project name>/repos/<repo name>/raw/<path to file>/<file name>?<branch>
 ```
 
-You can copy&paste the URL from BitBucket's web UI, for example
+For example, using your private repositories would need the following settings:
 ```
 export INSTALLER_CONFIG_URL=https://contoso/projects/project/repos/repo/raw/projects.json
 export INSTALLER_CONFIG_SCM=bitbucket_server
+export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 ```
 
-:warning: Only public repositories are supported at this time, I had no time to test with private repositories
+Token is insterted in the header using `curl`
+
+```
+-H Authorization: Bearer ${token}
+```
 
 #### Plain HTTP
 
@@ -280,6 +291,7 @@ pipeline {
     environment {
 
         // installer configuration
+        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'
         INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'
 
         // use a directory outside of job's workspace

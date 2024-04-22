@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-INSTALLER_VERSION="2.7.5"
+INSTALLER_VERSION="2.7.8"
 
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
@@ -449,6 +449,14 @@ function get_stream_configuration_bitbucket_server()
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
   local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
+  local token="${INSTALLER_CONFIG_TOKEN}"
+
+  local bearerToken
+  if [[ -z $token ]]; then
+    bearerToken=""
+  else
+    bearerToken="Authorization: Bearer ${token}"
+  fi
 
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
@@ -456,7 +464,7 @@ function get_stream_configuration_bitbucket_server()
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}?at=${streamRefSpec}" -o "projects.json")
+    httpCode=$(curl -k --write-out "%{http_code}" -L $bearerToken "${configurationURL}?at=${streamRefSpec}" -o "projects.json")
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch doesn't exists"
       exit 1
@@ -467,7 +475,7 @@ function get_stream_configuration_bitbucket_server()
     fi
   else
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
-    if ! curl -s -k -L -# "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
+    if ! curl -s -k -H "${bearerToken}" -L "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
       err "Failed to download stream configuration"
       exit 1
     fi
