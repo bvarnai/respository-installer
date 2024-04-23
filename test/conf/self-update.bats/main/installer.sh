@@ -1122,6 +1122,7 @@ function get_self_github()
 # shellcheck disable=SC2317
 function get_self_plain()
 {
+  echo get_self_github "$1"
   get_self_github "$1"
 }
 
