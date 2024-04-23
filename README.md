@@ -26,7 +26,7 @@ and **nothing** more.
     - [Supported SCM types](#supported-scm-types)
       - [GitHub](#github)
         - [Token configuration](#token-configuration)
-      - [BitBucket Enterprise](#bitbucket-enterprise)
+      - [Bitbucket Enterprise](#bitbucket-enterprise)
         - [Token configuration](#token-configuration-1)
       - [Plain HTTP](#plain-http)
     - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
@@ -113,7 +113,7 @@ export INSTALLER_CONFIG_URL=https://#token#@raw.githubusercontent.com/user/repo/
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 ```
 
-#### BitBucket Enterprise
+#### Bitbucket Enterprise
 
 Since Bitbucket uses the URL's query string to specify the branch, there is no need to use special URL variables. The format is the following:
 
