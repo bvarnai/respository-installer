@@ -421,4 +421,5 @@ To be added
 
 ## Development notes
 
-I used Google's [Shell Style Guide](https://google.github.io/styleguide/shellguide.html) with the help of [ShellCheck](https://www.shellcheck.net/)
+- I used Google's [Shell Style Guide](https://google.github.io/styleguide/shellguide.html) with the help of [ShellCheck](https://www.shellcheck.net/)
+- Tests written in [Bats-core: Bash Automated Testing System](https://github.com/bats-core/bats-core)
