@@ -25,7 +25,9 @@ and **nothing** more.
   - [Installation](#installation)
     - [Supported SCM types](#supported-scm-types)
       - [GitHub](#github)
+        - [Token configuration](#token-configuration)
       - [BitBucket Enterprise](#bitbucket-enterprise)
+        - [Token configuration](#token-configuration-1)
       - [Plain HTTP](#plain-http)
     - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
     - [Prerequisites](#prerequisites)
@@ -74,12 +76,14 @@ If you are using GitHub, only `INSTALLER_CONFIG_URL` is needed.
 
 ### Supported SCM types
 
-We need to know how to get the configuration file form the SCM without actually cloning it. This means assembling a URL used by `curl` to get the configuration. The following SCM types are supported:
+**installer** needs to know how to get the configuration file form the SCM without actually cloning it. This means assembling a URL used by `curl` to get the configuration. The following SCM types are supported:
   - github - GitHub *[default]*
   - bitbucket_server - Bitbucket Enterprise (server/data center)
   - plain - Plain HTTP
 
-:warning: This is only used for configuration file discovery, you can use any *Git* platform later for your projects. Authentication for *Git* commands are based on your git configuration.
+:bulb: This is only used for configuration file discovery, you can use any *Git* platform later for your projects. Authentication for *Git* commands are based on your *Git* configuration.
+
+:warning: Bitbucket Cloud is not yet supported
 
 #### GitHub
 
@@ -90,11 +94,16 @@ https://#token#@raw.githubusercontent.com/<user or organization>/<repo name>/#br
 ```
 The following variables are used in the URL:
 
-- `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` env. variable which holds your *Personal access token* or PAT. To create PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+- `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` env. variable which holds your *Personal access token* or PAT
 - `#branch#` is replaced with the currect branch (this done automatically)
 
-:bulb: Token is only needed for private repositories. Make sure you set `repo` scope (and nothing more) when creating the PAT
-![github-pat](docs/github-pat.png)
+##### Token configuration
+
+To create token or PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+
+Make sure you set `repo` scope (and nothing more) when creating the PAT ![github-pat](docs/github-pat.png).
+
+:bulb: Token is needed for private repositories
 
 For example, using your private repositories would need the following settings:
 ```
@@ -104,23 +113,31 @@ export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 
 #### BitBucket Enterprise
 
-Since Bitbucket uses the URL's query string to specify the branch, there is no need to use markers. The format is the following:
+Since Bitbucket uses the URL's query string to specify the branch, there is no need to use special URL variables. The format is the following:
 
 ```
 https://<server url>/projects/<project name>/repos/<repo name>/raw/<path to file>/<file name>?<branch>
 ```
+
+##### Token configuration
+
+To create token or `HTTP access token` follow the offical guide [HTTP access tokens](https://confluence.atlassian.com/bitbucketserver/http-access-tokens-939515499.html)
+
+Make sure you set `Project read` and `Repository read` permissions (and nothing more) when creating the PAT ![bitbucket-token](docs/bitbucket-token.png)
+
+Token is inserted in the header using `curl`
+
+```
+-H Authorization: Bearer ${token}
+```
+
+:bulb: Token is needed for private repositories
 
 For example, using your private repositories would need the following settings:
 ```
 export INSTALLER_CONFIG_URL=https://contoso/projects/project/repos/repo/raw/projects.json
 export INSTALLER_CONFIG_SCM=bitbucket_server
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
-```
-
-Token is inserted in the header using `curl`
-
-```
--H Authorization: Bearer ${token}
 ```
 
 #### Plain HTTP
