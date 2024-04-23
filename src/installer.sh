@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-INSTALLER_VERSION="2.7.5"
+INSTALLER_VERSION="2.7.8"
 
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
@@ -32,7 +32,7 @@ function help()
   echo "  update                update existing projects"; \
   echo "  help                  print help - this -"; \
   echo "Options:"; \
-  echo "      --use-local-config          use a local copy of the configuration"; \
+  echo "      --use-local-config          use the local the configuration file"; \
   echo "      --skip-self-update          do not update the script itself"; \
   echo "  -y, --yes                       say 'yes' to user questions"; \
   echo "      --link <target>             linked mode"; \
@@ -186,6 +186,7 @@ function install_project()
       # check if fetch configuration contains our refspec for the current branch
 
       configRefs=$(git config  --local --get-all remote.origin.fetch)
+      # shellcheck disable=SC2206
       refsArray=($configRefs)
       if [[ "${refsArray[*]}" =~ "*" ]]; then
         git config --unset-all "remote.origin.fetch" > /dev/null
@@ -398,7 +399,7 @@ function precondition_user_confirm_uncommited()
   if [[ $1 == 0 ]]; then
     log "Existing project repositories might be reset depending on the configuration"
     while true; do
-      read -r -p "Uncommited changes could be at risk, do you want to continue? (y/n)" yn
+      read -r -p "Uncommited changes maybe at risk, do you want to continue? (y/n)" yn
       case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit 1;;
@@ -449,14 +450,23 @@ function get_stream_configuration_bitbucket_server()
   local streamBranch="$2"
   local configurationURL="${INSTALLER_CONFIG_URL}"
   local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
+  local token="${INSTALLER_CONFIG_TOKEN}"
+
+  local bearerToken
+  if [[ -z $token ]]; then
+    bearerToken=""
+  else
+    bearerToken="Authorization: Bearer ${token}"
+  fi
 
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${streamBranch}")
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}?at=${streamRefSpec}" -o "projects.json")
+    httpCode=$(curl -k --write-out "%{http_code}" -L $bearerToken "${configurationURL}?at=${streamRefSpec}" -o "projects.json")
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch doesn't exists"
       exit 1
@@ -466,8 +476,9 @@ function get_stream_configuration_bitbucket_server()
       return
     fi
   else
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
-    if ! curl -s -k -L -# "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
+    if ! curl -s -k -H "${bearerToken}" -L "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
       err "Failed to download stream configuration"
       exit 1
     fi
@@ -512,6 +523,7 @@ function get_stream_configuration_github()
   # shellcheck disable=SC2001
   configurationURL=$(echo "$configurationURL" | sed "s/#token#/$token/")
   if [[ "${streamBranchSet}" == 1 ]]; then
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
