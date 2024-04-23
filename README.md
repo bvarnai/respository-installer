@@ -319,7 +319,7 @@ pipeline {
     environment {
 
         // installer configuration
-        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'
+        INSTALLER_SELF_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/installer.sh'
         INSTALLER_CONFIG_URL = 'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'
 
         // use a directory outside of job's workspace
@@ -357,16 +357,16 @@ SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace/${EXECUTOR_NUMBER}"
 
 ### Stream explained
 
-For example the team is working on a "theoretical" Java update, migrating from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `master` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `master` or `java17`.
+For example the team is working on a "theoretical" Java update, migrating from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `main` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `main` or `java17`.
 
 If a developer works on `java17` branch, simply switches tooling to that stream
 ```
 ./installer.sh --stream java17 update
 ```
 
-Other developer who remains on `master` just continues as
+Other developer who remains on `main` just continues as
 ```
-./installer.sh --stream master update
+./installer.sh --stream main update
 ```
 
 ### Commands

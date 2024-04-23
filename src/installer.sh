@@ -13,6 +13,7 @@ declare -r INSTALLER_DEFAULT_BRANCH=${INSTALLER_DEFAULT_BRANCH:-'main'}
 declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'github'}
 declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
 declare -r INSTALLER_GET_SELF=${INSTALLER_GET_SELF:-"get_self_${INSTALLER_CONFIG_SCM}"}
+declare -r INSTALLER_GET_SELF_STRICT=${INSTALLER_GET_SELF_STRICT:-'false'}
 
 #######################################
 # Displays help.
@@ -1105,9 +1106,11 @@ function get_self_github()
   # shellcheck disable=SC2001
   selfURL=$(echo "$selfURL" | sed "s/#branch#/$defaultBranch/")
   httpCode=$(curl_scm "${selfURL}" '' "${output}")
-  if [[ ${httpCode} -ne 200 ]] ; then
-    err "[updater] Failed to download self update"
-    exit 1
+  if [[ "$INSTALLER_GET_SELF_STRICT" = 'true' ]]; then
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "[updater] Failed to download self update"
+      exit 1
+    fi
   fi
 }
 
@@ -1151,9 +1154,11 @@ function get_self_bitbucket_server()
   local httpCode
   { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
   httpCode=$(curl_scm "${selfURL}?at=${streamRefSpec}" "${bearerToken}" "${output}")
-  if [[ ${httpCode} -ne 200 ]] ; then
-    err "[updater] Failed to download self update"
-    exit 1
+  if [[ "$INSTALLER_GET_SELF_STRICT" = 'true' ]]; then
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "[updater] Failed to download self update"
+      exit 1
+    fi
   fi
 }
 
