@@ -188,6 +188,8 @@ Following tools are required and must be installed
   - `curl`
   - `sed`
   - `uname`
+  - `awk`
+  - `grep`
   - `bash` >= 4.0.0
 
 :warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself if not available. This step is platform specific

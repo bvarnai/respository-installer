@@ -6,12 +6,13 @@
 # shellcheck disable=SC2034
 INSTALLER_VERSION="2.7.8"
 
-declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh'}
-declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
+declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/installer.sh'}
+declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
 declare -r INSTALLER_CONFIG_TOKEN=${INSTALLER_CONFIG_TOKEN:-''}
 declare -r INSTALLER_DEFAULT_BRANCH=${INSTALLER_DEFAULT_BRANCH:-'main'}
 declare -r INSTALLER_CONFIG_SCM=${INSTALLER_CONFIG_SCM:-'github'}
 declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATION:-"get_stream_configuration_${INSTALLER_CONFIG_SCM}"}
+declare -r INSTALLER_GET_SELF=${INSTALLER_GET_SELF:-"get_self_${INSTALLER_CONFIG_SCM}"}
 
 #######################################
 # Displays help.
@@ -47,6 +48,13 @@ function help()
   echo "More information visit https://github.com/bvarnai/respository-installer" 1>&2; exit 0;
 }
 
+#######################################
+# Creates folder links, platform specific.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
 function link()
 {
   log "Creating link $1 to $2"
@@ -306,9 +314,9 @@ function install_project()
 #######################################
 # Sets git configuration setting from the configuration.
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 function gitConfig()
 {
@@ -346,9 +354,9 @@ function gitConfig()
 #######################################
 # Executes doLast commands from the configuration.
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 function doLast()
 {
@@ -389,9 +397,9 @@ function doLast()
 #######################################
 # Gets consent from the user that changes at risk.
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 function precondition_user_confirm_uncommited()
 {
@@ -412,9 +420,9 @@ function precondition_user_confirm_uncommited()
 #######################################
 # Encodes strings for cURL compatibility.
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 # shellcheck disable=SC2317
 function urlencode() {
@@ -439,9 +447,9 @@ function urlencode() {
 # Bitbucket Enterprise SCM.
 # credits https://gist.github.com/cdown/1163649
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 # shellcheck disable=SC2317
 function get_stream_configuration_bitbucket_server()
@@ -466,7 +474,7 @@ function get_stream_configuration_bitbucket_server()
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl -k --write-out "%{http_code}" -L $bearerToken "${configurationURL}?at=${streamRefSpec}" -o "projects.json")
+    httpCode=$(curl_scm "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch doesn't exists"
       exit 1
@@ -478,21 +486,22 @@ function get_stream_configuration_bitbucket_server()
   else
     # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
-    if ! curl -s -k -H "${bearerToken}" -L "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
+    httpCode=$(curl_scm "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
+    if [[ ${httpCode} -ne 200 ]] ; then
       err "Failed to download stream configuration"
       exit 1
+    else
+      log "Stream branch '${defaultBranch}' is selected (default)"
     fi
-    log "Stream branch '${defaultBranch}' is selected (default)"
   fi
 }
 
 #######################################
 # Downloads the stream configuration from web server with static content.
-# credits https://gist.github.com/cdown/1163649
 # Arguments:
-#   None
+#   TDB
 # Returns:
-#   None
+#   TBD
 #######################################
 # shellcheck disable=SC2317
 function get_stream_configuration_plain()
@@ -503,11 +512,10 @@ function get_stream_configuration_plain()
 #######################################
 # Downloads the stream configuration from
 # GitHub SCM.
-# credits https://gist.github.com/cdown/1163649
 # Arguments:
-#   None
+#   TBD
 # Returns:
-#   None
+#   TBD
 #######################################
 # shellcheck disable=SC2317
 function get_stream_configuration_github()
@@ -530,7 +538,7 @@ function get_stream_configuration_github()
     local httpCode
     # shellcheck disable=SC2001
     configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$streamRefSpec/")
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}" -o "projects.json")
+    httpCode=$(curl_scm "${configurationURL}" '' 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch '${streamRefSpec}' doesn't exists"
       exit 1
@@ -543,12 +551,13 @@ function get_stream_configuration_github()
     local httpCode
     # shellcheck disable=SC2001
     configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$defaultBranch/")
-    httpCode=$(curl -s -k --write-out "%{http_code}" -# "${configurationURL}" -o "projects.json")
+    httpCode=$(curl_scm "${configurationURL}" '' 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Failed to get stream configuration on branch '${defaultBranch}' (default)"
       exit 1
+    else
+      log "Stream branch '${defaultBranch}' is selected (default)"
     fi
-    log "Stream branch '${defaultBranch}' is selected (default)"
   fi
 }
 
@@ -612,6 +621,25 @@ function get_jq()
     # set executable permission (it's curled)
     chmod +x "${JQ}" > /dev/null 2>&1;
   fi
+}
+
+#######################################
+# Call curl with optional authentication.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
+# shellcheck disable=SC2317
+function curl_scm()
+{
+  local url="$1"
+  local token="$2"
+  local output="$3"
+
+  local httpCode
+  httpCode=$(curl -s -k --write-out "%{http_code}" -H "${token}" -L "${url}" -o "${output}")
+  echo $httpCode
 }
 
 declare -r LOG_PREFIX="[installer]"
@@ -1026,11 +1054,8 @@ function update()
   local temporaryFile
   temporaryFile=$(mktemp -p "" "XXXXX.sh")
 
-  local selfURL="${INSTALLER_SELF_URL}"
-  if ! curl -s -k -L -# "${selfURL}" > "${temporaryFile}"; then
-    err "[updater] Failed to download updates"
-    exit 1
-  fi
+  # call SCM specific getter
+  $GET_SELF "${temporaryFile}"
 
   local nextVersion
   nextVersion=$(grep "^INSTALLER_VERSION" "${temporaryFile}" | awk -F'[="]' '{print $3}')
@@ -1055,6 +1080,80 @@ function update()
     rm -f "${temporaryFile}"
     # continue, we are at the latest version
     INSTALLER_LATEST=1
+  fi
+}
+
+#######################################
+# Downloads self update from
+# GitHub SCM.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
+# shellcheck disable=SC2317
+function get_self_github()
+{
+  local output="$1"
+  local selfURL="${INSTALLER_SELF_URL}"
+  local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
+  local token="${INSTALLER_CONFIG_TOKEN}"
+
+  # shellcheck disable=SC2001
+  selfURL=$(echo "$selfURL" | sed "s/#token#/$token/")
+
+  # shellcheck disable=SC2001
+  selfURL=$(echo "$selfURL" | sed "s/#branch#/$defaultBranch/")
+  httpCode=$(curl_scm "${selfURL}" '' "${output}")
+  if [[ ${httpCode} -ne 200 ]] ; then
+    err "[updater] Failed to download self update"
+    exit 1
+  fi
+}
+
+#######################################
+# Downloads self update from web server with static content.
+# GitHub SCM.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
+# shellcheck disable=SC2317
+function get_self_plain()
+{
+  get_self_github "$1"
+}
+
+#######################################
+# Downloads self update from
+# Bitbucket Enterprise SCM.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
+# shellcheck disable=SC2317
+function get_self_bitbucket_server()
+{
+  local output="$1"
+  local selfURL="${INSTALLER_SELF_URL}"
+  local defaultBranch="${INSTALLER_DEFAULT_BRANCH}"
+  local token="${INSTALLER_CONFIG_TOKEN}"
+
+  local bearerToken
+  if [[ -z $token ]]; then
+    bearerToken=""
+  else
+    bearerToken="Authorization: Bearer ${token}"
+  fi
+
+  local httpCode
+  { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
+  httpCode=$(curl_scm "${selfURL}?at=${streamRefSpec}" "${bearerToken}" "${output}")
+  if [[ ${httpCode} -ne 200 ]] ; then
+    err "[updater] Failed to download self update"
+    exit 1
   fi
 }
 
