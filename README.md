@@ -15,8 +15,6 @@ I worked in a Java development team, we had about 15 repositories. I needed a si
 
 and **nothing** more.
 
-I looked at existing tools such as Google's [repo](https://github.com/GerritCodeReview/git-repo), but they are much more complicated and usually mixing development workflow tasks which I wanted to keep separately.
-
 :bulb: I use the word *project* interchangeably with *repository*
 
 ## Table of contents
@@ -57,16 +55,22 @@ I looked at existing tools such as Google's [repo](https://github.com/GerritCode
 
 ## Installation
 
+For easier understanding of the initial steps, the following diagram provides an overview
+
 ![Overview](docs/overview.png)
 
-The following environment variables are needed:
+To get started, you will need the following
+
+- Configuration file aka `projects.json` (see [Configuration file](#configuration-file))
+
+And these environment variables pointing to your configuration
 
 - `INSTALLER_CONFIG_URL` - URL of the configuration `projects.json`
 - `INSTALLER_CONFIG_SCM` - type of SCM (GitHub etc.) used for the configuration
 
 If you are using GitHub, only `INSTALLER_CONFIG_URL` is needed.
 
-:memo: The best way to work in a team to fork **installer** and set defaults according to the platfrom used
+:memo: For the best user experience, I recommend froking **installer** and set defaults according to your environment
 
 ### Supported SCM types
 
@@ -75,7 +79,7 @@ We need to know how to get the configuration file form the SCM without actually 
   - bitbucket_server - Bitbucket Enterprise (server/data center)
   - plain - Plain HTTP
 
-:warning: This is only used for configuration file discovery, you can use any `git` platform later for your projects. Authentication for `git` commands are based on your git configuration.
+:warning: This is only used for configuration file discovery, you can use any *Git* platform later for your projects. Authentication for *Git* commands are based on your git configuration.
 
 #### GitHub
 
@@ -113,7 +117,7 @@ export INSTALLER_CONFIG_SCM=bitbucket_server
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 ```
 
-Token is insterted in the header using `curl`
+Token is inserted in the header using `curl`
 
 ```
 -H Authorization: Bearer ${token}
@@ -121,7 +125,7 @@ Token is insterted in the header using `curl`
 
 #### Plain HTTP
 
-This type is mainly used to testing and it's very similar to GitHub's format, only that `token` or any other authentication is not supported.
+This type is mainly used for testing and it's very similar to GitHub's format, only that `token` or any other authentication is not supported.
 
 To get the configuration file the following URL format is used:
 
@@ -130,7 +134,7 @@ https://<server url>/<server path>/#branch#/<path to file>/<file name>
 ```
 The following variables are used in the URL:
 
-- `#branch#` is replaced with the currect branch (this done automatically)
+- `#branch#` is replaced with the current/working branch (this done by the script)
 
 For example, using your `localhost` server for configuration:
 ```
@@ -194,7 +198,7 @@ workspace-root
 
 ### Configuration file
 
-The configuration file is called `projects.json` and it's downloaded using the `INSTALLER_CONFIG_URL` environment variable. It contains information about all your `git` projects, including setup instructions.
+The configuration file is called `projects.json` and it's downloaded using the `INSTALLER_CONFIG_URL` environment variable. It contains information about all your *Git* projects, including setup instructions.
 
 ```json
 {
@@ -251,7 +255,7 @@ The configuration file is called `projects.json` and it's downloaded using the `
 - Setting `update==false` means repositories are fetched but not updated. This is desirable for development projects, so working branches are felt unchanged
 - :warning: Setting `update==true` means repositories are fetched, reset and updated. This also means the branch will be switched to the default branch
 
-:bulb: You can use a bootstap project to host your DevOps scripts etc. for example doLast scripts
+:bulb: You can use a bootstrap project to host your DevOps scripts etc. for example doLast scripts
 
 ## Usage
 
@@ -329,7 +333,7 @@ SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace/${EXECUTOR_NUMBER}"
 
 ### Stream explained
 
-For example the team is working on a teoretical Java update, migrate from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `master` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `master` or `java17`.
+For example the team is working on a "theoretical" Java update, migrating from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `master` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `master` or `java17`.
 
 If a developer works on `java17` branch, simply switches tooling to that stream
 ```

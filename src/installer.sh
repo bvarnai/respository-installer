@@ -186,6 +186,7 @@ function install_project()
       # check if fetch configuration contains our refspec for the current branch
 
       configRefs=$(git config  --local --get-all remote.origin.fetch)
+      # shellcheck disable=SC2206
       refsArray=($configRefs)
       if [[ "${refsArray[*]}" =~ "*" ]]; then
         git config --unset-all "remote.origin.fetch" > /dev/null
@@ -398,7 +399,7 @@ function precondition_user_confirm_uncommited()
   if [[ $1 == 0 ]]; then
     log "Existing project repositories might be reset depending on the configuration"
     while true; do
-      read -r -p "Uncommited changes could be at risk, do you want to continue? (y/n)" yn
+      read -r -p "Uncommited changes maybe at risk, do you want to continue? (y/n)" yn
       case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit 1;;
@@ -460,6 +461,7 @@ function get_stream_configuration_bitbucket_server()
 
   log "Getting stream configuration..."
   if [[ "${streamBranchSet}" == 1 ]]; then
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${streamBranch}")
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
@@ -474,6 +476,7 @@ function get_stream_configuration_bitbucket_server()
       return
     fi
   else
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
     if ! curl -s -k -H "${bearerToken}" -L "${configurationURL}?at=${streamRefSpec}" -o "projects.json"; then
       err "Failed to download stream configuration"
@@ -520,6 +523,7 @@ function get_stream_configuration_github()
   # shellcheck disable=SC2001
   configurationURL=$(echo "$configurationURL" | sed "s/#token#/$token/")
   if [[ "${streamBranchSet}" == 1 ]]; then
+    # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "${streamBranch}")
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
