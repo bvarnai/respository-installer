@@ -101,7 +101,9 @@ The following variables are used in the URL:
 
 To create token or PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
 
-Make sure you set `repo` scope (and nothing more) when creating the PAT ![github-pat](docs/github-pat.png).
+Make sure you set `repo` scope (and nothing more) when creating the PAT.
+
+![github-pat](docs/github-pat.png).
 
 :bulb: Token is needed for private repositories
 
@@ -123,7 +125,9 @@ https://<server url>/projects/<project name>/repos/<repo name>/raw/<path to file
 
 To create token or `HTTP access token` follow the offical guide [HTTP access tokens](https://confluence.atlassian.com/bitbucketserver/http-access-tokens-939515499.html)
 
-Make sure you set `Project read` and `Repository read` permissions (and nothing more) when creating the PAT ![bitbucket-token](docs/bitbucket-token.png)
+Make sure you set `Project read` and `Repository read` permissions (and nothing more) when creating the token.
+
+![bitbucket-token](docs/bitbucket-token.png)
 
 Token is inserted in the header using `curl`
 
