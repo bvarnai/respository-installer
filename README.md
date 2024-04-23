@@ -39,7 +39,7 @@ and **nothing** more.
       - [Options for development/testing](#options-for-developmenttesting)
     - [Link mode](#link-mode)
     - [Stream explained](#stream-explained)
-    - [Command reference](#command-reference)
+    - [Commands](#commands)
       - [help](#help)
       - [list](#list)
       - [install](#install)
@@ -105,7 +105,7 @@ Make sure you set `repo` scope (and nothing more) when creating the PAT.
 
 ![github-pat](docs/github-pat.png).
 
-:bulb: Token is needed for private repositories
+:bulb: Token is needed for private repositories only
 
 For example, using your private repositories would need the following settings:
 ```
@@ -135,7 +135,7 @@ Token is inserted in the header using `curl`
 -H Authorization: Bearer ${token}
 ```
 
-:bulb: Token is needed for private repositories
+:bulb: Token is needed for private repositories only
 
 For example, using your private repositories would need the following settings:
 ```
@@ -202,7 +202,7 @@ Supported platforms
 
 ### Workspace explained
 
-Workspace is the directory where your repositories/projects are cloned. **installer** runs from this workspace's root and projects in the configuration
+Workspace is the directory where your repositories/projects are cloned. It's also the current working directory where **installer** runs. Pojects in the configuration
 are specified *relative* to this directory.
 
 Example layout with `installer.sh` present
@@ -213,6 +213,7 @@ workspace-root
   project2
   subfolder/project3
   installer.sh
+  projects.json
 ```
 
 :memo: `.installer` directory is a "temp" directory used to store the configuration and other dependencies such as `jq` if any
@@ -366,7 +367,9 @@ Other developer who remains on `master` just continues as
 ./installer.sh --stream master update
 ```
 
-### Command reference
+### Commands
+
+The following commands are available. For options see [Options](#options)
 
 ---
 #### help

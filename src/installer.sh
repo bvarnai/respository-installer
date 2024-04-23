@@ -32,7 +32,7 @@ function help()
   echo "  update                update existing projects"; \
   echo "  help                  print help - this -"; \
   echo "Options:"; \
-  echo "      --use-local-config          use a local copy of the configuration"; \
+  echo "      --use-local-config          use the local the configuration file"; \
   echo "      --skip-self-update          do not update the script itself"; \
   echo "  -y, --yes                       say 'yes' to user questions"; \
   echo "      --link <target>             linked mode"; \
