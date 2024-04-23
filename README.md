@@ -417,7 +417,7 @@ Updates existing projects in the current directory.
 
 ## FAQ
 
-To be added
+To be added. If you have any question, just create an issue and I will respond.
 
 ## Development notes
 
