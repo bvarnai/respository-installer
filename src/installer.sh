@@ -15,6 +15,61 @@ declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATI
 declare -r INSTALLER_GET_SELF=${INSTALLER_GET_SELF:-"get_self_${INSTALLER_CONFIG_SCM}"}
 declare -r INSTALLER_GET_SELF_STRICT=${INSTALLER_GET_SELF_STRICT:-'false'}
 
+# User specific funtions
+declare -r INSTALLER_GET_DEPENDENCIES=${INSTALLER_GET_DEPENDENCIES:-'user_get_depedencies'}
+declare -r INSTALLER_LINK=${INSTALLER_LINK:-'user_link'}
+declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
+
+# shellcheck disable=SC2317
+function user_get_depedencies()
+{
+  # jq
+  # check if jq is available on the path
+  if jq --version >/dev/null 2>&1; then
+    JQ='jq'
+  else
+    # get source location for download
+    if [[ $(uname -s) == "Linux" ]]; then
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
+    else
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
+    fi
+    JQ='.installer/jq'
+  fi
+
+  # if not available then try to download
+  if [[ -n ${JQSourceURL} ]]; then
+    log "Getting jq..."
+    if ! curl -s -L "${JQSourceURL}" -o "${JQ}" --create-dirs; then
+      err "Failed to download jq binary"
+      exit 1
+    fi
+    # set executable permission (it's curled)
+    chmod +x "${JQ}" > /dev/null 2>&1;
+  fi
+}
+
+#######################################
+# Creates folder links, platform specific.
+# Arguments:
+#   TBD
+# Returns:
+#   TBD
+#######################################
+function user_link()
+{
+  log "Creating link $1 to $2"
+  if [[ $(uname -s) == "Linux" ]]; then
+    ln -s "${2}" "${1}"
+  else
+    cmd <<< "mklink /j \"$1\" \"${2//\//\\}\"" > /dev/null
+  fi
+}
+
+function user_unlink() {
+  :
+}
+
 #######################################
 # Displays help.
 # Arguments:
@@ -65,6 +120,7 @@ function link()
     cmd <<< "mklink /j \"$1\" \"${2//\//\\}\"" > /dev/null
   fi
 }
+
 
 #######################################
 # Installs a project.
@@ -168,7 +224,7 @@ function install_project()
         exit 1
       fi
     fi
-    link "${path}" "${linkTarget}/${path}"
+    $INSTALLER_LINK "${path}" "${linkTarget}/${path}"
   fi
 
   if [[ -d "${path}" ]]; then
@@ -639,7 +695,8 @@ function curl_scm()
   local output="$3"
 
   local httpCode
-  httpCode=$(curl -s -k --write-out "%{http_code}" -H "${token}" -L "${url}" -o "${output}")
+  httpCode=$(curl -s -k --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}")
+  # shellcheck disable=SC2086
   echo $httpCode
 }
 
@@ -827,15 +884,14 @@ function main()
   # check preconditions
   precondition_nested_repository
 
-  set_jq
+  if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
+    # get user specific dependencies
+    $INSTALLER_GET_DEPENDENCIES
+  fi
 
   if [[ "${useLocalConfiguration}" == "0" ]]; then
-
     # get/update stream configuration
     $INSTALLER_GET_STREAM_CONFIGURATION "${streamBranchSet}" "${streamBranch}"
-
-    # get jq executable (external dependency)
-    get_jq
   else
     if [[ ! -f "projects.json" ]]; then
       err "No local configuration found"
@@ -1153,6 +1209,7 @@ function get_self_bitbucket_server()
 
   local httpCode
   { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
+
   httpCode=$(curl_scm "${selfURL}?at=${streamRefSpec}" "${bearerToken}" "${output}")
   if [[ "$INSTALLER_GET_SELF_STRICT" = 'true' ]]; then
     if [[ ${httpCode} -ne 200 ]] ; then
