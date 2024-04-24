@@ -15,59 +15,104 @@ declare -r INSTALLER_GET_STREAM_CONFIGURATION=${INSTALLER_GET_STREAM_CONFIGURATI
 declare -r INSTALLER_GET_SELF=${INSTALLER_GET_SELF:-"get_self_${INSTALLER_CONFIG_SCM}"}
 declare -r INSTALLER_GET_SELF_STRICT=${INSTALLER_GET_SELF_STRICT:-'false'}
 
-# User specific funtions
+declare -r INSTALLER_LOG_PREFIX="[installer]"
+
+# User specific functions
 declare -r INSTALLER_GET_DEPENDENCIES=${INSTALLER_GET_DEPENDENCIES:-'user_get_depedencies'}
 declare -r INSTALLER_LINK=${INSTALLER_LINK:-'user_link'}
 declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
 
+#######################################
+# Gets user specific tool dependencies such
+# jq, curl etc. This helps bootstrapping in
+# limited environments such as Git Bash.
+# Globals:
+#   INSTALLER_JQ - the jq executable
+#   INSTALLER_CURL - the curl executable
+# Arguments:
+#   $1 - the link directory
+#   $2 - the target directory to link
+# Returns:
+#   None
+#######################################
 # shellcheck disable=SC2317
 function user_get_depedencies()
 {
   # jq
   # check if jq is available on the path
   if jq --version >/dev/null 2>&1; then
-    JQ='jq'
+    INSTALLER_JQ='jq'
   else
+    local JQSourceURL
     # get source location for download
     if [[ $(uname -s) == "Linux" ]]; then
         JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
     else
         JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
     fi
-    JQ='.installer/jq'
+    INSTALLER_JQ='.installer/jq'
   fi
 
   # if not available then try to download
   if [[ -n ${JQSourceURL} ]]; then
     log "Getting jq..."
-    if ! curl -s -L "${JQSourceURL}" -o "${JQ}" --create-dirs; then
+    if ! curl -s -L "${JQSourceURL}" -o "${INSTALLER_JQ}" --create-dirs; then
       err "Failed to download jq binary"
       exit 1
     fi
     # set executable permission (it's curled)
-    chmod +x "${JQ}" > /dev/null 2>&1;
+    chmod +x "${INSTALLER_JQ}" > /dev/null 2>&1;
   fi
 }
 
 #######################################
-# Creates folder links, platform specific.
+# Creates directory link in linked mode,
+# this code part is platform specific.
 # Arguments:
-#   TBD
+#   $1 - the link directory
+#   $2 - the target directory to link
 # Returns:
-#   TBD
+#   None
 #######################################
+# shellcheck disable=SC2317
 function user_link()
 {
-  log "Creating link $1 to $2"
+  local link="$1"
+  local target="$2"
+
+  log "Creating link $link to $target"
   if [[ $(uname -s) == "Linux" ]]; then
-    ln -s "${2}" "${1}"
+    ln -s "${target}" "${link}"
   else
-    cmd <<< "mklink /j \"$1\" \"${2//\//\\}\"" > /dev/null
+    cmd <<< "mklink /j \"$link\" \"${target//\//\\}\"" > /dev/null
   fi
 }
 
-function user_unlink() {
-  :
+#######################################
+# Removes directory link in linked mode,
+# this code part is platform specific.
+# Arguments:
+#   $1 - the link directory
+#   $2 - the target directory to link
+# Returns:
+#   None
+#######################################
+# shellcheck disable=SC2317
+function user_unlink()
+{
+  local link="$1"
+
+  # if target is a link, unlink first
+  if [[ $(uname -s) == "Linux" ]]; then
+    # no need to unlink
+    :
+  else
+    fsutil reparsepoint delete "${link}" > /dev/null 2>&1;
+  fi
+  if ! rm -r "${link}"; then
+    err "Unable to unlink"
+    exit 1
+  fi
 }
 
 #######################################
@@ -105,24 +150,6 @@ function help()
 }
 
 #######################################
-# Creates folder links, platform specific.
-# Arguments:
-#   TBD
-# Returns:
-#   TBD
-#######################################
-function link()
-{
-  log "Creating link $1 to $2"
-  if [[ $(uname -s) == "Linux" ]]; then
-    ln -s "${2}" "${1}"
-  else
-    cmd <<< "mklink /j \"$1\" \"${2//\//\\}\"" > /dev/null
-  fi
-}
-
-
-#######################################
 # Installs a project.
 # Arguments:
 #   $1 - the project configuration
@@ -150,21 +177,21 @@ function install_project()
   local skipDoLast="$9"
 
   local project
-  project=$(echo "${configuration}" | "${JQ}" -r '.name')
+  project=$(echo "${configuration}" | "${INSTALLER_JQ}" -r '.name')
   log "Installing project '${project}'"
 
   local clone=1
   local fetchURL
   local pushURL
 
-  fetchURL=$(echo "${configuration}" | "${JQ}" -r ".urls.fetch?")
+  fetchURL=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".urls.fetch?")
   if [[ "${fetchURL}" == "null" ]]; then
     err "Project fetch URL is not configured"
     exit 1
   fi
   log "Repository fetch URL '${fetchURL}'"
 
-  pushURL=$(echo "${configuration}" | "${JQ}" -r ".urls.push?")
+  pushURL=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".urls.push?")
   if [[ "${pushURL}" == "null" ]]; then
     # fallback to use the same url
     pushURL="${fetchURL}"
@@ -172,19 +199,19 @@ function install_project()
   log "Repository push URL '${pushURL}'"
 
   local branch
-  branch=$(echo "${configuration}" | "${JQ}" -r ".branch")
+  branch=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".branch")
 
   local update
-  update=$(echo "${configuration}" | "${JQ}" -r ".update")
+  update=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".update")
 
   local rebase
-  rebase=$(echo "${configuration}" | "${JQ}" -r ".rebase?")
+  rebase=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".rebase?")
   if [[ "${rebase}" == "null" ]]; then
     rebase="false"
   fi
 
   local path
-  path=$(echo "${configuration}" | "${JQ}" -r ".path?")
+  path=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".path?")
   if [[ "${path}" == "null" ]]; then
     path="${project}"
   fi
@@ -211,18 +238,9 @@ function install_project()
 
     # link directory exists?
     if [[ -d "${path}" ]]; then
-      log "Existing link directory found, removing"
-      # if target is a link, unlink first
-      if [[ $(uname -s) == "Linux" ]]; then
-        # no need to unlink
-        :
-      else
-        fsutil reparsepoint delete "${path}" > /dev/null 2>&1;
-      fi
-      if ! rm -r "${path}"; then
-        err "Unable to remove directory"
-        exit 1
-      fi
+      log "Existing link found, deleting"
+      $INSTALLER_UNLINK "${path}"
+
     fi
     $INSTALLER_LINK "${path}" "${linkTarget}/${path}"
   fi
@@ -325,7 +343,7 @@ function install_project()
     # check if there is global override
     if [[ "${cloneOptionsSet}" == 0 ]]; then
       # use the configuration otherwise
-      cloneOptions=$(echo "${configuration}" | "${JQ}" -r ".cloneOptions?")
+      cloneOptions=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".cloneOptions?")
       if [[ "${cloneOptions}" == "null" ]]; then
         cloneOptions=""
       fi
@@ -380,16 +398,16 @@ function gitConfig()
   local configuration="$1"
 
   local project
-  project=$(echo "${configuration}" | "${JQ}" -r '.name')
+  project=$(echo "${configuration}" | "${INSTALLER_JQ}" -r '.name')
 
   local path
-  path=$(echo "${configuration}" | "${JQ}" -r ".path?")
+  path=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".path?")
   if [[ "${path}" == "null" ]]; then
     path="${project}"
   fi
 
   local gitConfigs
-  gitConfigs=$(echo "${configuration}" | "${JQ}" -r ".configuration[]?")
+  gitConfigs=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".configuration[]?")
   if [[ -n "$gitConfigs" ]]; then
     log "Setting git config(s)"
     pushd "${path}" > /dev/null || exit
@@ -424,16 +442,16 @@ function doLast()
     log "Skipping doLast commands"
   else
     local project
-    project=$(echo "${configuration}" | "${JQ}" -r '.name')
+    project=$(echo "${configuration}" | "${INSTALLER_JQ}" -r '.name')
 
     local path
-    path=$(echo "${configuration}" | "${JQ}" -r ".path?")
+    path=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".path?")
     if [[ "${path}" == "null" ]]; then
       path="${project}"
     fi
 
     local commands
-    commands=$(echo "${configuration}" | "${JQ}" -r ".doLast[]?")
+    commands=$(echo "${configuration}" | "${INSTALLER_JQ}" -r ".doLast[]?")
     if [[ -n "$commands" ]]; then
       log "Running doLast command(s)"
       pushd "${path}" > /dev/null || exit
@@ -531,7 +549,7 @@ function get_stream_configuration_bitbucket_server()
     # it's not possible to check remote branch here
     # as no git reposiory available yet, just try to fetch the file
     local httpCode
-    httpCode=$(curl_scm "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
+    httpCode=$(curl_get "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch doesn't exists"
       exit 1
@@ -543,7 +561,7 @@ function get_stream_configuration_bitbucket_server()
   else
     # shellcheck disable=2162
     { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
-    httpCode=$(curl_scm "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
+    httpCode=$(curl_get "${configurationURL}?at=${streamRefSpec}" "${bearerToken}" 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Failed to download stream configuration"
       exit 1
@@ -595,7 +613,7 @@ function get_stream_configuration_github()
     local httpCode
     # shellcheck disable=SC2001
     configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$streamRefSpec/")
-    httpCode=$(curl_scm "${configurationURL}" '' 'projects.json')
+    httpCode=$(curl_get "${configurationURL}" '' 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Stream branch '${streamRefSpec}' doesn't exists"
       exit 1
@@ -608,7 +626,7 @@ function get_stream_configuration_github()
     local httpCode
     # shellcheck disable=SC2001
     configurationURL=$(echo "$configurationURL" | sed "s/#branch#/$defaultBranch/")
-    httpCode=$(curl_scm "${configurationURL}" '' 'projects.json')
+    httpCode=$(curl_get "${configurationURL}" '' 'projects.json')
     if [[ ${httpCode} -ne 200 ]] ; then
       err "Failed to get stream configuration on branch '${defaultBranch}' (default)"
       exit 1
@@ -636,47 +654,36 @@ function precondition_nested_repository()
 }
 
 #######################################
-# Set JQ and download URL depending on OS type.
+# Set default JQ if available.
+# Globals:
+#   INSTALLER_JQ - the jq executable
 # Arguments:
 #   None
 # Returns:
-#   JQSourceURL - platfrom specific download location
-#   JQ - the executable
+#   None
 #######################################
-function set_jq()
+function set_jq_default()
 {
   # check if jq is available on the path
   if jq --version >/dev/null 2>&1; then
-    JQ='jq'
-  else
-    # get source location for download
-    if [[ $(uname -s) == "Linux" ]]; then
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
-    else
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
-    fi
-    JQ='.installer/jq'
+    INSTALLER_JQ='jq'
   fi
 }
 
 #######################################
-# Downloads the JQ tool binary from local SCM.
+# Set default CURL if available.
+# Globals:
+#   INSTALLER_CURL - the curl executable
 # Arguments:
 #   None
 # Returns:
 #   None
 #######################################
-function get_jq()
+function set_curl_default()
 {
-  # if source is set then try to download
-  if [[ -n ${JQSourceURL} ]]; then
-    log "Getting jq..."
-    if ! curl -k -s -L -# "${JQSourceURL}" -o "${JQ}" --create-dirs; then
-      err "Failed to download jq binary"
-      exit 1
-    fi
-    # set executable permission (it's curled)
-    chmod +x "${JQ}" > /dev/null 2>&1;
+  # check if jq is available on the path
+  if curl --version >/dev/null 2>&1; then
+    INSTALLER_CURL='curl'
   fi
 }
 
@@ -688,19 +695,17 @@ function get_jq()
 #   TBD
 #######################################
 # shellcheck disable=SC2317
-function curl_scm()
+function curl_get()
 {
   local url="$1"
   local token="$2"
   local output="$3"
 
   local httpCode
-  httpCode=$(curl -s -k --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}")
+  httpCode=$("${INSTALLER_CURL}" -s --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}")
   # shellcheck disable=SC2086
   echo $httpCode
 }
-
-declare -r LOG_PREFIX="[installer]"
 
 #######################################
 # Logs a message to stdout.
@@ -711,7 +716,7 @@ declare -r LOG_PREFIX="[installer]"
 #######################################
 function log()
 {
-  echo "${LOG_PREFIX} $*"
+  echo "${INSTALLER_LOG_PREFIX} $*"
 }
 
 #######################################
@@ -725,7 +730,7 @@ function err()
 {
   # quick sleep to get all responses from the remote ops
   sleep 1s > /dev/null 2>&1;
-  echo -e "${LOG_PREFIX} ! $*" >&2
+  echo -e "${INSTALLER_LOG_PREFIX} ! $*" >&2
 }
 
 #######################################
@@ -884,10 +889,13 @@ function main()
   # check preconditions
   precondition_nested_repository
 
-  if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
-    # get user specific dependencies
-    $INSTALLER_GET_DEPENDENCIES
-  fi
+  #if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
+  #  # get user specific dependencies
+  #  $INSTALLER_GET_DEPENDENCIES
+  #else
+  #  set_jq_default
+  #  set_curl_default
+  #fi
 
   if [[ "${useLocalConfiguration}" == "0" ]]; then
     # get/update stream configuration
@@ -952,7 +960,7 @@ function main()
   fi
 
   local bootstrapProject
-  bootstrapProject=$("${JQ}" -r '.bootstrap' projects.json)
+  bootstrapProject=$("${INSTALLER_JQ}" -r '.bootstrap' projects.json)
 
   local bootstrapProjectAdded=0
   # project order can affect doLast scripts
@@ -982,7 +990,7 @@ function main()
   else
     log "No projects were specified by the user, adding default projects"
     # no user project selection, add all 'default' projects from the configuration
-    readarray -t projectNamesArray < <("${JQ}" -r '.projects[] | select(.default=="true") | .name' projects.json)
+    readarray -t projectNamesArray < <("${INSTALLER_JQ}" -r '.projects[] | select(.default=="true") | .name' projects.json)
 
     # project order retained from the configuration file
     orderedProjects=true
@@ -995,7 +1003,7 @@ function main()
     orderedProjectNamesArray=()
     # load the projects from the configuration
     local configurationProjectNamesArray
-    readarray -t configurationProjectNamesArray < <("${JQ}" -r '.projects[] | .name' projects.json)
+    readarray -t configurationProjectNamesArray < <("${INSTALLER_JQ}" -r '.projects[] | .name' projects.json)
     for configurationProjectName in "${configurationProjectNamesArray[@]}"
     do
       # trim name
@@ -1034,11 +1042,11 @@ function main()
 function list_projects()
 {
   local length
-  length=$("${JQ}" -r '.projects | length' projects.json)
+  length=$("${INSTALLER_JQ}" -r '.projects | length' projects.json)
   for ((i = 0 ; i < "${length}" ; i++)); do
     # to impove performance read all values once
     local currentProjectConfiguration
-    currentProjectConfiguration=$("${JQ}" -r ".projects[${i}] | [.name, .category, .default, .path?] | join(\",\")" projects.json)
+    currentProjectConfiguration=$("${INSTALLER_JQ}" -r ".projects[${i}] | [.name, .category, .default, .path?] | join(\",\")" projects.json)
     local currentProjectConfigurationArray
     IFS=',' read -r -a currentProjectConfigurationArray <<< "${currentProjectConfiguration}"
 
@@ -1073,7 +1081,7 @@ function find_project_by_name()
   local projectName="$1"
 
   local projectConfiguration
-  projectConfiguration=$("${JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
+  projectConfiguration=$("${INSTALLER_JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
   if [[ ! -z "${projectConfiguration}" ]]; then
     INSTALLER_LAST_RETURN="${projectConfiguration}"
   fi
@@ -1092,7 +1100,7 @@ function project_exists()
   local projectName="$1"
 
   local projectConfiguration
-  projectConfiguration=$("${JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
+  projectConfiguration=$("${INSTALLER_JQ}" -r ".projects[] | select(.name == \"${projectName}\")" projects.json)
   if [[ ! -z "${projectConfiguration}" ]]; then
     INSTALLER_LAST_RETURN=1
   fi
@@ -1119,12 +1127,12 @@ function update()
   local absScriptPath
   absScriptPath=$(readlink -f "${INSTALLER_SELF}")
   if [[ "$INSTALLER_VERSION" < "${nextVersion}" ]]; then
-    printf "${LOG_PREFIX} [updater] Updating %s -> %s\n" "${INSTALLER_VERSION}" "${nextVersion}"
+    printf "${INSTALLER_LOG_PREFIX} [updater] Updating %s -> %s\n" "${INSTALLER_VERSION}" "${nextVersion}"
 
     {
       echo "cp \"${temporaryFile}\" \"${absScriptPath}\""
       echo "rm -f \"${temporaryFile}\""
-      echo "echo ${LOG_PREFIX} [updater] Re-running updated script"
+      echo "echo ${INSTALLER_LOG_PREFIX} [updater] Re-running updated script"
       echo "exec \"${absScriptPath}\" --skip-self-update $@"
     } >> updater.sh
 
@@ -1161,7 +1169,7 @@ function get_self_github()
 
   # shellcheck disable=SC2001
   selfURL=$(echo "$selfURL" | sed "s/#branch#/$defaultBranch/")
-  httpCode=$(curl_scm "${selfURL}" '' "${output}")
+  httpCode=$(curl_get "${selfURL}" '' "${output}")
   if [[ "$INSTALLER_GET_SELF_STRICT" = 'true' ]]; then
     if [[ ${httpCode} -ne 200 ]] ; then
       err "[updater] Failed to download self update"
@@ -1210,7 +1218,7 @@ function get_self_bitbucket_server()
   local httpCode
   { read -d '' streamRefSpec; }< <(urlencode "refs/heads/${defaultBranch}")
 
-  httpCode=$(curl_scm "${selfURL}?at=${streamRefSpec}" "${bearerToken}" "${output}")
+  httpCode=$(curl_get "${selfURL}?at=${streamRefSpec}" "${bearerToken}" "${output}")
   if [[ "$INSTALLER_GET_SELF_STRICT" = 'true' ]]; then
     if [[ ${httpCode} -ne 200 ]] ; then
       err "[updater] Failed to download self update"
@@ -1302,6 +1310,15 @@ function updater()
   # globals for update
   INSTALLER_LATEST=0
   INSTALLER_UPDATED=0
+
+  # bootstap
+  set_jq_default
+  set_curl_default
+
+  if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
+    # get user specific dependencies
+    $INSTALLER_GET_DEPENDENCIES
+  fi
 
   # remove previous updater script
   rm -f updater.sh
