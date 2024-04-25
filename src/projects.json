@@ -1,4 +1,5 @@
 {
+  "bootstrap": "Hello-World",
   "projects": [
     {
       "name": "Hello-World",
