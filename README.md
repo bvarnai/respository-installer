@@ -30,9 +30,10 @@ and **nothing** more.
         - [Token configuration](#token-configuration-1)
       - [Plain HTTP](#plain-http)
     - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
+    - [Git credentials](#git-credentials)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
-    - [Workspace explained](#workspace-explained)
+    - [Workspace](#workspace)
     - [Configuration file](#configuration-file)
   - [Usage](#usage)
     - [Options](#options)
@@ -73,7 +74,7 @@ And these environment variables pointing to your configuration
 
 If you are using GitHub, only `INSTALLER_CONFIG_URL` is needed.
 
-:memo: For the best user experience, I recommend froking **installer** and set defaults according to your environment
+:memo: For the best user experience, I recommend forking **installer** and set defaults according to your environment
 
 ### Supported SCM types
 
@@ -96,11 +97,11 @@ https://#token#@raw.githubusercontent.com/<user or organization>/<repo name>/#br
 The following variables are used in the URL:
 
 - `#token#` is replaced with `INSTALLER_CONFIG_TOKEN` env. variable which holds your *Personal access token* or PAT
-- `#branch#` is replaced with the currect branch (this done automatically)
+- `#branch#` is replaced with the current branch (this done automatically)
 
 ##### Token configuration
 
-To create token or PAT follow the offical guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
+To create token or PAT follow the official guide [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)
 
 Make sure you set `repo` scope (and nothing more) when creating the PAT.
 
@@ -182,6 +183,10 @@ Finally run **installer** in the current working directory.
 ```
 :tada: Once downloaded **installer** will upgrade itself, no need to run `curl` again.
 
+### Git credentials
+
+:warning: **isntaller** dosen't manage your *Git* credentials (ssh keys etc.) in any way. You need setup *Git* credentials to work with the repositories speficified in your configuration
+
 ### Prerequisites
 
 Following tools are required and must be installed
@@ -194,12 +199,11 @@ Following tools are required and must be installed
   - `grep`
   - `bash` >= 4.0.0
 
-
 ## Configuration
 
-### Workspace explained
+### Workspace
 
-Workspace is the directory where your repositories/projects are cloned. It's also the current working directory where **installer** runs. Pojects in the configuration
+Workspace is the directory where your repositories/projects are cloned. It's also the current working directory where **installer** runs. Projects in the configuration
 are specified *relative* to this directory.
 
 Example layout with `installer.sh` present
@@ -301,7 +305,7 @@ Optional elements are shown in brackets []. For example, command may take a list
 
 ### Link mode
 
-In some cases, you don't want to have a fresh clone of a project to save some time. For example *Jenkins* multibanch pipeline would create a new workspace and make a fresh clone in using **installer**. This is where `link` mode can help.
+In some cases, you don't want to have a fresh clone of a project to save some time. For example *Jenkins* multibranch  pipeline would create a new workspace and make a fresh clone using **installer**. This is where `link` mode can help.
 
 Let see an example *Jenkinsfile*
 
@@ -364,7 +368,7 @@ Other developer who remains on `main` just continues as
 ### Custom environments
 
 In some cases you want/need to manage your dependencies independently from the environment. For example *Git for Windows* does not include `jq` by default.
-You can add custom code to **installer** to bootstrap `jq` and downloading it on the fly.
+You can add custom code to **installer** to bootstrap `jq` and download it on the fly.
 
 ```bash
 function user_get_dependencies()
