@@ -13,19 +13,22 @@ setup() {
 
     DIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
 
-    mkdir -p "$TEST_FILE_TMPDIR/$TEST_BASENAME"
+    mkdir -p "$TEST_FILE_TMPDIR/$TEST_BASENAME/main"
 
     # start a second server
     "$DIR/$TEST_SERVER_EXECUTABLE" --directory-listing --port 8788 --root "$TEST_FILE_TMPDIR" &
     echo $! > "$TEST_FILE_TMPDIR/.test-server-2.pid"
 
     # stage reference installer for testing
-    cp "$DIR/../src/installer.sh" "$TEST_FILE_TMPDIR/$TEST_BASENAME/installer.sh"
+    cp "$DIR/../src/installer.sh" "$TEST_FILE_TMPDIR/$TEST_BASENAME/main/installer.sh"
 
     export TEST_SERVER_URL_2="http://localhost:8788"
 
     # change to test server
-    export INSTALLER_SELF_URL="${TEST_SERVER_URL_2}/${TEST_BASENAME}/installer.sh"
+    export INSTALLER_SELF_URL="${TEST_SERVER_URL_2}/${TEST_BASENAME}/#branch#/installer.sh"
+
+    # this is need to verify if the actual update failed
+    export INSTALLER_GET_SELF_STRICT=true
 }
 
 @test "update to higher version" {
