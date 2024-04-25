@@ -31,6 +31,7 @@ and **nothing** more.
       - [Plain HTTP](#plain-http)
     - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
     - [Prerequisites](#prerequisites)
+      - [Custom environments](#custom-environments)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
     - [Configuration file](#configuration-file)
@@ -186,19 +187,66 @@ Finally run **installer** in the current working directory.
 Following tools are required and must be installed
   - `git`
   - `curl`
+  - `jq`
   - `sed`
   - `uname`
   - `awk`
   - `grep`
   - `bash` >= 4.0.0
 
-:warning: [jq](https://jqlang.github.io/jq/) is downloaded by **installer** to bootstrap itself if not available. This step is platform specific
+#### Custom environments
 
-Supported platforms
-- Linux amd64
-- Windows amd64
-  - [Git for Windows](https://gitforwindows.org/) 64 bit version
-    - Tested with 2.41.0+
+In some cases you want/need to manage your dependencies independently from the environment. For example *Git for Windows* does not include `jq` by default.
+You can add custom code to **installer** to bootstrap `jq` and downloading it on the fly.
+
+```bash
+function user_get_dependencies()
+{
+  # put your code here
+  :
+}
+```
+
+This function should set the following globals to the dependencies
+- INSTALLER_JQ
+- INSTALLER_CURL
+
+An example implementation for `jq`
+
+```bash
+function user_get_dependencies()
+{
+  # check if jq is available on the path
+  if jq --version >/dev/null 2>&1; then
+    INSTALLER_JQ='jq'
+  else
+    local JQSourceURL
+    # get source location for download
+    if [[ $(uname -s) == "Linux" ]]; then
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
+    else
+        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
+    fi
+    INSTALLER_JQ='.installer/jq'
+  fi
+
+  # if not available then try to download
+  if [[ -n ${JQSourceURL} ]]; then
+    log "Getting jq..."
+    local httpCode
+    httpCode=$(curl_get "${JQSourceURL}" '' "${INSTALLER_JQ}")
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "Failed to download jq binary"
+      exit 1
+    fi
+
+    # set executable permission
+    chmod +x "${INSTALLER_JQ}" > /dev/null 2>&1;
+  fi
+}
+```
+
+:memo: I recommend to use `.installer` directory as a "temp" directory used to store such dependencies
 
 ## Configuration
 
@@ -210,15 +258,12 @@ are specified *relative* to this directory.
 Example layout with `installer.sh` present
 ```
 workspace-root
-  .installer
   project1
   project2
   subfolder/project3
   installer.sh
   projects.json
 ```
-
-:memo: `.installer` directory is a "temp" directory used to store the configuration and other dependencies such as `jq` if any
 
 ### Configuration file
 
