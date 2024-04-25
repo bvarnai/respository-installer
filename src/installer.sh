@@ -18,7 +18,7 @@ declare -r INSTALLER_GET_SELF_STRICT=${INSTALLER_GET_SELF_STRICT:-'false'}
 declare -r INSTALLER_LOG_PREFIX="[installer]"
 
 # User specific functions
-declare -r INSTALLER_GET_DEPENDENCIES=${INSTALLER_GET_DEPENDENCIES:-'user_get_depedencies'}
+declare -r INSTALLER_GET_DEPENDENCIES=${INSTALLER_GET_DEPENDENCIES:-'user_get_dependencies'}
 declare -r INSTALLER_LINK=${INSTALLER_LINK:-'user_link'}
 declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
 
@@ -26,43 +26,22 @@ declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
 # Gets user specific tool dependencies such
 # jq, curl etc. This helps bootstrapping in
 # limited environments such as Git Bash.
+# Warning: Only public repositories without
+# authentication can be used for dependencies.
+# Globals are initialized with defaults, only
+# update them if necessary.
 # Globals:
 #   INSTALLER_JQ - the jq executable
 #   INSTALLER_CURL - the curl executable
 # Arguments:
-#   $1 - the link directory
-#   $2 - the target directory to link
+#   None
 # Returns:
 #   None
 #######################################
 # shellcheck disable=SC2317
-function user_get_depedencies()
+function user_get_dependencies()
 {
-  # jq
-  # check if jq is available on the path
-  if jq --version >/dev/null 2>&1; then
-    INSTALLER_JQ='jq'
-  else
-    local JQSourceURL
-    # get source location for download
-    if [[ $(uname -s) == "Linux" ]]; then
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
-    else
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
-    fi
-    INSTALLER_JQ='.installer/jq'
-  fi
-
-  # if not available then try to download
-  if [[ -n ${JQSourceURL} ]]; then
-    log "Getting jq..."
-    if ! curl -s -L "${JQSourceURL}" -o "${INSTALLER_JQ}" --create-dirs; then
-      err "Failed to download jq binary"
-      exit 1
-    fi
-    # set executable permission (it's curled)
-    chmod +x "${INSTALLER_JQ}" > /dev/null 2>&1;
-  fi
+  :
 }
 
 #######################################
@@ -702,7 +681,7 @@ function curl_get()
   local output="$3"
 
   local httpCode
-  httpCode=$("${INSTALLER_CURL}" -s --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}")
+  httpCode=$("${INSTALLER_CURL}" -s --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}" --create-dirs)
   # shellcheck disable=SC2086
   echo $httpCode
 }
@@ -888,14 +867,6 @@ function main()
 
   # check preconditions
   precondition_nested_repository
-
-  #if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
-  #  # get user specific dependencies
-  #  $INSTALLER_GET_DEPENDENCIES
-  #else
-  #  set_jq_default
-  #  set_curl_default
-  #fi
 
   if [[ "${useLocalConfiguration}" == "0" ]]; then
     # get/update stream configuration
