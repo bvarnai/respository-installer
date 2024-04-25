@@ -29,7 +29,7 @@ and **nothing** more.
       - [Bitbucket Enterprise](#bitbucket-enterprise)
         - [Token configuration](#token-configuration-1)
       - [Plain HTTP](#plain-http)
-    - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
+    - [Getting started for the first time](#getting-started-for-the-first-time)
     - [Git credentials](#git-credentials)
     - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
@@ -168,7 +168,7 @@ Branches are simply folders like `main`, `master` etc.
 
 :memo: You can set these variables in `~/.profile` or `~/.bashrc` to make them permanent
 
-### Getting **installer** for the first time
+### Getting started for the first time
 
 Next get the **installer** with `curl` for the first time
 
