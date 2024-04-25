@@ -375,10 +375,10 @@ function user_get_dependencies()
 ```
 
 This function could override the following globals with the location of these executables
-- INSTALLER_JQ
-- INSTALLER_CURL
+- `INSTALLER_JQ`
+- `INSTALLER_CURL`
 
-An example implementation for `jq` for Linux/Git Bash
+An example implementation for `jq` for *Linux/Git Bash*
 
 ```bash
 function user_get_dependencies()
@@ -421,7 +421,7 @@ function user_get_dependencies()
 }
 ```
 
-:memo: I recommend to use `.installer` directory as a "temp" directory used to store such dependencies
+:memo: I recommend to use `.installer` directory as a "temp" directory used to store dependencies
 
 Additionally you can override link/unlink functionality the same way with functions `user_link` and `user_unlink`.
 

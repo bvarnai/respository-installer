@@ -1291,15 +1291,6 @@ function updater()
   INSTALLER_LATEST=0
   INSTALLER_UPDATED=0
 
-  # bootstap
-  set_jq_default
-  set_curl_default
-
-  if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
-    # get user specific dependencies
-    $INSTALLER_GET_DEPENDENCIES
-  fi
-
   # remove previous updater script
   rm -f updater.sh
 
@@ -1316,6 +1307,15 @@ function updater()
     main "$@"
   fi
 }
+
+# bootstapping
+set_jq_default
+set_curl_default
+
+if [[ -n ${INSTALLER_GET_DEPENDENCIES} ]]; then
+  # get user specific dependencies
+  $INSTALLER_GET_DEPENDENCIES
+fi
 
 updater "$@"
 
