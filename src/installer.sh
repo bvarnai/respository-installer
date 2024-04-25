@@ -690,7 +690,7 @@ function curl_get()
   local output="$3"
 
   local httpCode
-  httpCode=$("${INSTALLER_CURL}" -s --write-out "%{http_code}" -H "'${token}'" -L "${url}" -o "${output}" --create-dirs)
+  httpCode=$("${INSTALLER_CURL}" -s -k --write-out "%{http_code}" -H "${token}" -L "${url}" -o "${output}" --create-dirs)
   # shellcheck disable=SC2086
   echo $httpCode
 }
