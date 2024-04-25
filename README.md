@@ -170,13 +170,13 @@ Branches are simply folders like `main`, `master` etc.
 
 ### Getting started for the first time
 
-Next get the **installer** with `curl` for the first time
+Next get the **installer** with `curl` for the first time:
 
 ```bash
 curl -L https://raw.githubusercontent.com/bvarnai/respository-installer/main/src/installer.sh -o installer.sh && chmod +x installer.sh
 ```
 
-Finally run **installer** in the current working directory.
+Finally run **installer** in the current working directory:
 
 ```bash
 ./installer.sh
@@ -189,7 +189,7 @@ Finally run **installer** in the current working directory.
 
 ### Prerequisites
 
-Following tools are required and must be installed
+Following tools are required and must be installed:
   - `git`
   - `curl`
   - `jq`
@@ -206,7 +206,7 @@ Following tools are required and must be installed
 Workspace is the directory where your repositories/projects are cloned. It's also the current working directory where **installer** runs. Projects in the configuration
 are specified *relative* to this directory.
 
-Example layout with `installer.sh` present
+Example layout with `installer.sh` present:
 ```bash
 workspace-root
   project1
@@ -280,7 +280,6 @@ The configuration file is called `projects.json` and it's downloaded using the `
 ## Usage
 
 Command syntax is the following:
-
 ```bash
 ./installer.sh [options] [<command>] [arguments]
 ```
@@ -378,7 +377,7 @@ function user_get_dependencies()
 }
 ```
 
-This function could override the following globals with the location of these executables
+This function could override the following globals with the location of these executables:
 - `INSTALLER_JQ`
 - `INSTALLER_CURL`
 

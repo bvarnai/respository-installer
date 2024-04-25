@@ -961,11 +961,12 @@ function main()
       fi
     done
 
-    # make sure mandatory 'tools' project is added
-    if [[ ${bootstrapProjectAdded} == 0 ]]; then
-      log "Adding bootstrap project '$bootstrapProject' implicitly"
-      # add to the beginning of the array
-      projectNamesArray=("${bootstrapProject}" "${projectNamesArray[@]}")
+    if [[ ! "${bootstrapProject}" == "null" ]]; then
+      if [[ ${bootstrapProjectAdded} == 0 ]]; then
+        log "Adding bootstrap project '$bootstrapProject' implicitly"
+        # add to the beginning of the array
+        projectNamesArray=("${bootstrapProject}" "${projectNamesArray[@]}")
+      fi
     fi
   else
     log "No projects were specified by the user, adding default projects"
