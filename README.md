@@ -31,7 +31,6 @@ and **nothing** more.
       - [Plain HTTP](#plain-http)
     - [Getting **installer** for the first time](#getting-installer-for-the-first-time)
     - [Prerequisites](#prerequisites)
-      - [Custom environments](#custom-environments)
   - [Configuration](#configuration)
     - [Workspace explained](#workspace-explained)
     - [Configuration file](#configuration-file)
@@ -40,6 +39,7 @@ and **nothing** more.
       - [Options for development/testing](#options-for-developmenttesting)
     - [Link mode](#link-mode)
     - [Stream explained](#stream-explained)
+    - [Custom environments](#custom-environments)
     - [Commands](#commands)
       - [help](#help)
       - [list](#list)
@@ -109,7 +109,7 @@ Make sure you set `repo` scope (and nothing more) when creating the PAT.
 :bulb: Token is needed for private repositories only
 
 For example, using your private repositories would need the following settings:
-```
+```bash
 export INSTALLER_CONFIG_URL=https://#token#@raw.githubusercontent.com/user/repo/#branch#/projects.json
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
 ```
@@ -139,7 +139,7 @@ Token is inserted in the header using `curl`
 :bulb: Token is needed for private repositories only
 
 For example, using your private repositories would need the following settings:
-```
+```bash
 export INSTALLER_CONFIG_URL=https://contoso/projects/project/repos/repo/raw/projects.json
 export INSTALLER_CONFIG_SCM=bitbucket_server
 export INSTALLER_CONFIG_TOKEN=1bacnotmyrealtoken123beefbea
@@ -194,59 +194,6 @@ Following tools are required and must be installed
   - `grep`
   - `bash` >= 4.0.0
 
-#### Custom environments
-
-In some cases you want/need to manage your dependencies independently from the environment. For example *Git for Windows* does not include `jq` by default.
-You can add custom code to **installer** to bootstrap `jq` and downloading it on the fly.
-
-```bash
-function user_get_dependencies()
-{
-  # put your code here
-  :
-}
-```
-
-This function should set the following globals to the dependencies
-- INSTALLER_JQ
-- INSTALLER_CURL
-
-An example implementation for `jq`
-
-```bash
-function user_get_dependencies()
-{
-  # check if jq is available on the path
-  if jq --version >/dev/null 2>&1; then
-    INSTALLER_JQ='jq'
-  else
-    local JQSourceURL
-    # get source location for download
-    if [[ $(uname -s) == "Linux" ]]; then
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
-    else
-        JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
-    fi
-    INSTALLER_JQ='.installer/jq'
-  fi
-
-  # if not available then try to download
-  if [[ -n ${JQSourceURL} ]]; then
-    log "Getting jq..."
-    local httpCode
-    httpCode=$(curl_get "${JQSourceURL}" '' "${INSTALLER_JQ}")
-    if [[ ${httpCode} -ne 200 ]] ; then
-      err "Failed to download jq binary"
-      exit 1
-    fi
-
-    # set executable permission
-    chmod +x "${INSTALLER_JQ}" > /dev/null 2>&1;
-  fi
-}
-```
-
-:memo: I recommend to use `.installer` directory as a "temp" directory used to store such dependencies
 
 ## Configuration
 
@@ -256,7 +203,7 @@ Workspace is the directory where your repositories/projects are cloned. It's als
 are specified *relative* to this directory.
 
 Example layout with `installer.sh` present
-```
+```bash
 workspace-root
   project1
   project2
@@ -405,14 +352,78 @@ SHARED_WORKSPACE = "${WORKSPACE}/../shared_workspace/${EXECUTOR_NUMBER}"
 For example the team is working on a "theoretical" Java update, migrating from Java 8 to Java 17. In the development project repository, they created a branch `java17` and started to work. However `main` development continues on Java 8 until everything is ready. `java17` branch needs the Java 17 JDK, tools etc. This means there are two parallel `stream`s of development. There will be two `projects.json` files on the corresponding branches with default branches set to `main` or `java17`.
 
 If a developer works on `java17` branch, simply switches tooling to that stream
-```
+```bash
 ./installer.sh --stream java17 update
 ```
 
 Other developer who remains on `main` just continues as
-```
+```bash
 ./installer.sh --stream main update
 ```
+
+### Custom environments
+
+In some cases you want/need to manage your dependencies independently from the environment. For example *Git for Windows* does not include `jq` by default.
+You can add custom code to **installer** to bootstrap `jq` and downloading it on the fly.
+
+```bash
+function user_get_dependencies()
+{
+  # put your code here
+  :
+}
+```
+
+This function could override the following globals with the location of these executables
+- INSTALLER_JQ
+- INSTALLER_CURL
+
+An example implementation for `jq` for Linux/Git Bash
+
+```bash
+function user_get_dependencies()
+{
+  # check if jq is available on the path
+  if jq --version >/dev/null 2>&1; then
+    INSTALLER_JQ='jq'
+  else
+    local system
+    system=$(uname -s)
+
+    # get source location for download
+    local JQSourceURL
+    if [[ "${system}" == "Linux" ]]; then
+      JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
+    elif [[ "${system}" =~ ^"MINGW64_NT" ]]; then
+      JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
+    else
+      err "Unsupported system ${system}"
+      exit 1
+    fi
+
+    # override global
+    INSTALLER_JQ='.installer/jq'
+  fi
+
+  # if not available then try to download
+  if [[ -n ${JQSourceURL} ]]; then
+    log "Getting jq..."
+    local httpCode
+    httpCode=$(curl_get "${JQSourceURL}" '' "${INSTALLER_JQ}")
+    if [[ ${httpCode} -ne 200 ]] ; then
+      err "Failed to download jq binary"
+      exit 1
+    fi
+
+    # set executable permission
+    chmod +x "${INSTALLER_JQ}" > /dev/null 2>&1;
+  fi
+}
+```
+
+:memo: I recommend to use `.installer` directory as a "temp" directory used to store such dependencies
+
+Additionally you can override link/unlink functionality the same way with functions `user_link` and `user_unlink`.
 
 ### Commands
 

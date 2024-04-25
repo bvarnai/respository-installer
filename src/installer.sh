@@ -23,12 +23,10 @@ declare -r INSTALLER_LINK=${INSTALLER_LINK:-'user_link'}
 declare -r INSTALLER_UNLINK=${INSTALLER_UNLINK:-'user_unlink'}
 
 #######################################
-# Gets user specific tool dependencies such
-# jq, curl etc. This helps bootstrapping in
-# limited environments such as Git Bash.
-# Warning: Only public repositories without
-# authentication can be used for dependencies.
-# Globals are initialized with defaults, only
+# Get user specific tool dependencies such
+# jq, curl etc. This helps bootstraping in
+# exotic environments such as Git Bash.
+# Globals are initialized by default, only
 # update them if necessary.
 # Globals:
 #   INSTALLER_JQ - the jq executable
@@ -60,10 +58,22 @@ function user_link()
   local target="$2"
 
   log "Creating link $link to $target"
-  if [[ $(uname -s) == "Linux" ]]; then
-    ln -s "${target}" "${link}"
+
+  local system
+  system=$(uname -s)
+  if [[ "${system}" == "Linux" ]]; then
+    if ! ln -s "${target}" "${link}"; then
+      err "Unable to create link"
+      exit 1
+    fi
+  elif [[ "${system}" =~ ^"MINGW64_NT" ]]; then
+    if ! cmd <<< "mklink /j \"$link\" \"${target//\//\\}\"" > /dev/null; then
+      err "Unable to create link"
+      exit 1
+    fi
   else
-    cmd <<< "mklink /j \"$link\" \"${target//\//\\}\"" > /dev/null
+    err "Unsupported system ${system}"
+    exit 1
   fi
 }
 
@@ -81,11 +91,10 @@ function user_unlink()
 {
   local link="$1"
 
+  local system
+  system=$(uname -s)
   # if target is a link, unlink first
-  if [[ $(uname -s) == "Linux" ]]; then
-    # no need to unlink
-    :
-  else
+  if [[ "${system}" =~ ^"MINGW64_NT" ]]; then
     fsutil reparsepoint delete "${link}" > /dev/null 2>&1;
   fi
   if ! rm -r "${link}"; then
