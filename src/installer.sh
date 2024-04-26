@@ -4,7 +4,7 @@
 # Constants
 # Important: only single digits are supported due to lexical comparsion
 # shellcheck disable=SC2034
-INSTALLER_VERSION="2.7.9"
+INSTALLER_VERSION="2.8.0"
 
 declare -r INSTALLER_SELF_URL=${INSTALLER_SELF_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/installer.sh'}
 declare -r INSTALLER_CONFIG_URL=${INSTALLER_CONFIG_URL:-'https://#token#@raw.githubusercontent.com/bvarnai/respository-installer/#branch#/src/projects.json'}
@@ -57,19 +57,30 @@ function user_link()
   local link="$1"
   local target="$2"
 
-  log "Creating link $link to $target"
-
   local system
   system=$(uname -s)
   if [[ "${system}" == "Linux" ]]; then
+    log "Creating link '$link' to '$target'"
     if ! ln -s "${target}" "${link}"; then
       err "Unable to create link"
       exit 1
     fi
-  elif [[ "${system}" =~ ^"MINGW64_NT" ]]; then
-    if ! cmd <<< "mklink /j \"$link\" \"${target//\//\\}\"" > /dev/null; then
-      err "Unable to create link"
-      exit 1
+  elif [[ "${system}" =~ ^(MINGW64_NT|MSYS_NT) ]]; then
+    log "Creating link '$link' to '$(cygpath -u "${target}")'"
+    # get target's absolute path
+    local absTarget
+    absTarget=$(cygpath -aw "${target}")
+    local linkParent
+    linkParent=$(dirname "${link}")
+    if [[ ! "${linkParent}" == "." ]]; then
+      # hierarhical path
+      mkdir -p "${linkParent}"
+      pushd "${linkParent}" > /dev/null || exit
+      link=$(basename "${link}")
+      cmd <<< "mklink /j \"$link\" \"${absTarget//\//\\}\"" > /dev/null;
+      popd > /dev/null || exit
+    else
+      cmd <<< "mklink /j \"$link\" \"${absTarget//\//\\}\"" > /dev/null;
     fi
   else
     err "Unsupported system ${system}"
