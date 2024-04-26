@@ -475,13 +475,13 @@ function doLast()
 # Returns:
 #   TBD
 #######################################
-function precondition_user_confirm_uncommited()
+function precondition_user_confirm_uncommitted()
 {
   # user already said yes?
   if [[ $1 == 0 ]]; then
     log "Existing project repositories might be reset depending on the configuration"
     while true; do
-      read -r -p "Uncommited changes maybe at risk, do you want to continue? (y/n)" yn
+      read -r -p "Uncommitted changes maybe at risk, do you want to continue? (y/n)" yn
       case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit 1;;
@@ -908,7 +908,7 @@ function main()
   fi
 
   # getting dangerous from here
-  precondition_user_confirm_uncommited "${yes}"
+  precondition_user_confirm_uncommitted "${yes}"
 
   # TODO handle SSL verification aka http.sslVerify
 
@@ -943,7 +943,7 @@ function main()
     do
       # add only valid projects
       project_exists "${projectNamePredicate}"
-      if [[ ! "${LAST_RETURN}" == "0" ]]; then
+      if [[ ! "${INSTALLER_LAST_RETURN}" == "0" ]]; then
         projectNames+=("${projectNamePredicate}")
       fi
     done
