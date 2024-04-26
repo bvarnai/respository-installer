@@ -429,7 +429,7 @@ function user_get_dependencies()
 
 #### Link/unlink
 
-Creating symbolic links might be platform specific. It's definitelly the case for *Linux* and *Windows* clients.
+Creating symbolic links might be platform specific. It's definitely the case for *Windows* clients.
 
 There are user functions `user_link` and `user_unlink` to handle symbolic links.
 
@@ -437,8 +437,6 @@ The default implementation is tested on the following platforms:
 - Linux amd64 - Ubuntu
 - Windows amd64 - Git for Windows 64 bit
   - 2.41.0+
-
-Additionally you can override link/unlink functionality the same way with functions `user_link` and `user_unlink`.
 
 ### Commands
 
