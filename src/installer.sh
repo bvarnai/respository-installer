@@ -943,7 +943,7 @@ function main()
     do
       # add only valid projects
       project_exists "${projectNamePredicate}"
-      if [[ ! "${LAST_RETURN}" == "0" ]]; then
+      if [[ ! "${INSTALLER_LAST_RETURN}" == "0" ]]; then
         projectNames+=("${projectNamePredicate}")
       fi
     done
