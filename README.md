@@ -41,6 +41,8 @@ and **nothing** more.
     - [Link mode](#link-mode)
     - [Stream explained](#stream-explained)
     - [Custom environments](#custom-environments)
+      - [Dependencies](#dependencies)
+      - [Link/unlink](#linkunlink)
     - [Commands](#commands)
       - [help](#help)
       - [list](#list)
@@ -366,6 +368,8 @@ Other developer who remains on `main` just continues as
 
 ### Custom environments
 
+#### Dependencies
+
 In some cases you want/need to manage your dependencies independently from the environment. For example *Git for Windows* does not include `jq` by default.
 You can add custom code to **installer** to bootstrap `jq` and download it on the fly.
 
@@ -386,29 +390,26 @@ An example implementation for `jq` for *Linux/Git Bash*
 ```bash
 function user_get_dependencies()
 {
-  # check if jq is available on the path
-  if jq --version >/dev/null 2>&1; then
+  if jq --version > /dev/null 2>&1; then
+    # jq is available in PATH
     INSTALLER_JQ='jq'
+  elif .installer/jq --version > /dev/null 2>&1; then
+    # jq is available in local temp
+    INSTALLER_JQ='.installer/jq'
   else
-    local system
-    system=$(uname -s)
-
-    # get source location for download
+    # jq will be downloaded
     local JQSourceURL
     if [[ "${system}" == "Linux" ]]; then
       JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64'
-    elif [[ "${system}" =~ ^"MINGW64_NT" ]]; then
+    elif [[ "${system}" =~ ^(MINGW64_NT|MSYS_NT) ]]; then
       JQSourceURL='https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe'
     else
       err "Unsupported system ${system}"
       exit 1
     fi
-
-    # override global
     INSTALLER_JQ='.installer/jq'
   fi
 
-  # if not available then try to download
   if [[ -n ${JQSourceURL} ]]; then
     log "Getting jq..."
     local httpCode
@@ -425,6 +426,17 @@ function user_get_dependencies()
 ```
 
 :memo: I recommend to use `.installer` directory as a "temp" directory used to store dependencies
+
+#### Link/unlink
+
+Creating symbolic links might be platform specific. It's definitelly the case for *Linux* and *Windows* clients.
+
+There are user functions `user_link` and `user_unlink` to handle symbolic links.
+
+The default implementation is tested on the following platforms:
+- Linux amd64 - Ubuntu
+- Windows amd64 - Git for Windows 64 bit
+  - 2.41.0+
 
 Additionally you can override link/unlink functionality the same way with functions `user_link` and `user_unlink`.
 
